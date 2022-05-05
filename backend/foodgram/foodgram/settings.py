@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'jy-tjk#-$n)vjlz7cya4&ui92azr6xe3x&t1j3dj4&atvf-po('
+SECRET_KEY = 'j0amnl40!q^^igb^0pzl5y2i$qu*fd2!9u(l7xke@dp3a3(e^7'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -126,3 +126,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = 'users.User'
+
+# DJOSER = {
+#     'SERIALIZERS': {
+#         'user': 'api.serializers.UserSerializer',
+#         'current_user': 'api.serializers.UserSerializer',
+#     },
+# }
