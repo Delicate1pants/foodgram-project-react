@@ -110,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
@@ -129,6 +129,7 @@ STATIC_URL = '/static/'
 AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'api.utils.custom_exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
     )
@@ -137,6 +138,7 @@ REST_FRAMEWORK = {
 DJOSER = {
     # Для создания токена через email
     'LOGIN_FIELD': 'email',
+    'HIDE_USERS': False,
     'SERIALIZERS': {
         'user_create': 'api.serializers.UserSerializer',
         # 'user': 'api.serializers.UserSerializer',
