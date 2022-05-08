@@ -135,6 +135,8 @@ REST_FRAMEWORK = {
 }
 
 DJOSER = {
+    # Для создания токена через email
+    'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
         'user_create': 'api.serializers.UserSerializer',
         # 'user': 'api.serializers.UserSerializer',

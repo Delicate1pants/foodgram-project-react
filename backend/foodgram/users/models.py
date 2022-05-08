@@ -26,7 +26,3 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     password = models.CharField(max_length=150)
-
-    # Для создания токена через дефолтный serializer djoser'a
-    REQUIRED_FIELDS = [username, first_name, last_name, password]
-    USERNAME_FIELD = 'email'
