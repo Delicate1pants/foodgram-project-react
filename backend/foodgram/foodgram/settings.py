@@ -128,20 +128,20 @@ STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = 'users.User'
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    )
+}
+
 DJOSER = {
     'SERIALIZERS': {
         'user_create': 'api.serializers.UserSerializer',
-        'user': 'api.serializers.UserSerializer',
-        'current_user': 'api.serializers.UserSerializer',
+        # 'user': 'api.serializers.UserSerializer',
+        # 'current_user': 'api.serializers.UserSerializer',
     },
 
     # 'PERMISSIONS': {
     #     'user_list': ['rest_framework.permissions.AllowAny'],
     # }
-}
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
-    )
 }

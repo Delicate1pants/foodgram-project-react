@@ -34,3 +34,6 @@ class UserSerializer(serializers.ModelSerializer):
                 'error_messages': {'blank': 'Обязательное поле.'}
             },
         }
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
