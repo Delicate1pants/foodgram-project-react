@@ -26,3 +26,29 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     password = models.CharField(max_length=150)
+    is_subscribed = models.BooleanField(default=False)
+
+
+class Subscription(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscriber'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscribed_to'
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_subscription'
+            ),
+            models.CheckConstraint(
+                name="prevent_self_follow",
+                check=~models.Q(user=models.F("author")),
+            ),
+        ]

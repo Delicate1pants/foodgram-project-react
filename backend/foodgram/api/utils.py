@@ -6,6 +6,9 @@ def custom_exception_handler(exc, context):
 
     if response.status_code == 400:
         for field in response.data:
+            # Текст ошибки для blank в модели игнорится и используется дефолт
+            # Даже в сериализаторе не всегда получается поменять этот текст
+            # Поэтому делаю это здесь
             if response.data[field] == ['Это поле не может быть пустым.']:
                 response.data[field] = 'Обязательное поле.'
     if response.status_code == 401:
