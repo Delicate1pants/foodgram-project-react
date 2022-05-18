@@ -132,7 +132,9 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'api.utils.custom_exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
-    )
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.UserListPagination',
+    'PAGE_SIZE': 1
 }
 
 DJOSER = {
