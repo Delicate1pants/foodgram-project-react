@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from recipes.models import Ingredient
 from users.models import Subscription, User
 
 
@@ -46,3 +47,13 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             return True
         except Subscription.DoesNotExist:
             return False
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ingredient
+        fields = [
+            'id', 'name', 'measurement_unit'
+        ]
+        read_only_fields = ['id', 'name', 'measurement_unit']

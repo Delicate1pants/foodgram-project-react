@@ -1,10 +1,14 @@
 from djoser import utils
 from djoser.conf import settings
 from djoser.views import TokenCreateView as DjoserTokenCreateView
-from rest_framework import status
+from rest_framework import filters, status, viewsets
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from .mixins import ExcludeUpdate_ModelViewSet
+from .pagination import IngredientListPagination
+from .serializers import IngredientSerializer
+from recipes.models import Ingredient
 
 
 class TokenCreateView(DjoserTokenCreateView):
@@ -17,16 +21,28 @@ class TokenCreateView(DjoserTokenCreateView):
         )
 
 
-class RecipeViewSet(ExcludeUpdate_ModelViewSet):
-    serializer_class = 'RecipeSerializer'
-    permission_classes = ('HasAccessOrReadOnly',)
-    pagination_class = 'PageNumberPagination'
+class IngredientViewset(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    permission_classes = (AllowAny,)
 
-    filter_backends = ['SearchFilter or DjangoFilterBackend?']
-    filterset_class = '?'
-    search_fields = ('something',)
-    search_fields = ['=something', ]
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('^name',)
 
-    queryset = '?'
+    pagination_class = IngredientListPagination
 
-    lookup_field = '?'
+
+class RecipeViewset(ExcludeUpdate_ModelViewSet):
+    pass
+    # serializer_class = 'RecipeSerializer'
+    # permission_classes = ('HasAccessOrReadOnly',)
+    # pagination_class = 'PageNumberPagination'
+
+    # filter_backends = ['SearchFilter or DjangoFilterBackend?']
+    # filterset_class = '?'
+    # search_fields = ('something',)
+    # search_fields = ['=something', ]
+
+    # queryset = '?'
+
+    # lookup_field = '?'
