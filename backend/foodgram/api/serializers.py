@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from recipes.models import Ingredient
+from recipes.models import Ingredient, Tag
 from users.models import Subscription, User
 
 
@@ -53,7 +53,13 @@ class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = [
-            'id', 'name', 'measurement_unit'
-        ]
+        fields = ['id', 'name', 'measurement_unit']
         read_only_fields = ['id', 'name', 'measurement_unit']
+
+
+class TagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = ['id', 'name', 'color', 'slug']
+        read_only_fields = ['id', 'name', 'color', 'slug']

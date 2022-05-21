@@ -7,8 +7,8 @@ from rest_framework.response import Response
 
 from .mixins import ExcludeUpdate_ModelViewSet
 from .pagination import IngredientListPagination
-from .serializers import IngredientSerializer
-from recipes.models import Ingredient
+from .serializers import IngredientSerializer, TagSerializer
+from recipes.models import Ingredient, Tag
 
 
 class TokenCreateView(DjoserTokenCreateView):
@@ -30,6 +30,13 @@ class IngredientViewset(viewsets.ReadOnlyModelViewSet):
     search_fields = ('^name',)
 
     pagination_class = IngredientListPagination
+
+
+class TagViewset(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = (AllowAny,)
+    pagination_class = None
 
 
 class RecipeViewset(ExcludeUpdate_ModelViewSet):
