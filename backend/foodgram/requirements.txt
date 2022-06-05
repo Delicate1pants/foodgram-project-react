@@ -3,3 +3,5 @@ djangorestframework==3.12.4
 djangorestframework-simplejwt==5.0.0
 djoser
 django-filter==21.1
+psycopg2-binary==2.8.6
+python-dotenv

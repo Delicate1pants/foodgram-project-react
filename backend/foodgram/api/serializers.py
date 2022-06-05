@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Tag
+from recipes.models import Ingredient, Recipe, Tag
 from users.models import Subscription, User
 
 
@@ -63,3 +63,57 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ['id', 'name', 'color', 'slug']
         read_only_fields = ['id', 'name', 'color', 'slug']
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    ingredients = serializers.JSONField()
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Tag.objects.all()
+    )
+    author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
+
+    def validate_ingredients(self, ingredients):
+        if type(ingredients) is not list:
+            raise serializers.ValidationError(
+                'Некорректный тип данных для ингредиентов, ожидался list'
+            )
+        for ingredient in ingredients:
+            if type(ingredient) is not dict:
+                raise serializers.ValidationError(
+                    'Некорректный тип данных с информацией '
+                    'о конкретном ингредиенте, ожидался dict'
+                )
+            if (
+                len(ingredient) != 2
+                or 'id' not in ingredient.keys()
+                or 'amount' not in ingredient.keys()
+            ):
+                raise serializers.ValidationError(
+                    'Информация о конкретном ингредиенте '
+                    'должна содержать 2 поля: id и amount'
+                )
+            if type(ingredient['id']) is not int:
+                raise serializers.ValidationError(
+                    'Некорректный тип данных для id, ожидался int'
+                )
+            try:
+                Ingredient.objects.get(id=ingredient['id'])
+            except Ingredient.DoesNotExist:
+                raise serializers.ValidationError(
+                    f'Ингредиент с id {ingredient["id"]} не найден'
+                )
+            if type(ingredient['amount']) is not int:
+                raise serializers.ValidationError(
+                    'Некорректный тип данных для amount, ожидался int'
+                )
+
+        return ingredients
+
+    class Meta:
+        model = Recipe
+        fields = [
+            'id', 'tags', 'author', 'ingredients',
+            'name', 'image', 'text', 'cooking_time'
+        ]
+
+        read_only_fields = ['id', 'author']

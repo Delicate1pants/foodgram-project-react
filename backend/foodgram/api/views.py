@@ -2,13 +2,13 @@ from djoser import utils
 from djoser.conf import settings
 from djoser.views import TokenCreateView as DjoserTokenCreateView
 from rest_framework import filters, status, viewsets
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from .mixins import ExcludeUpdate_ModelViewSet
+from .mixins import ExcludeUpdateModelViewSet
 from .pagination import IngredientListPagination
-from .serializers import IngredientSerializer, TagSerializer
-from recipes.models import Ingredient, Tag
+from .serializers import IngredientSerializer, RecipeSerializer, TagSerializer
+from recipes.models import Ingredient, Recipe, Tag
 
 
 class TokenCreateView(DjoserTokenCreateView):
@@ -21,7 +21,7 @@ class TokenCreateView(DjoserTokenCreateView):
         )
 
 
-class IngredientViewset(viewsets.ReadOnlyModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
@@ -32,24 +32,22 @@ class IngredientViewset(viewsets.ReadOnlyModelViewSet):
     pagination_class = IngredientListPagination
 
 
-class TagViewset(viewsets.ReadOnlyModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (AllowAny,)
     pagination_class = None
 
 
-class RecipeViewset(ExcludeUpdate_ModelViewSet):
-    pass
-    # serializer_class = 'RecipeSerializer'
-    # permission_classes = ('HasAccessOrReadOnly',)
-    # pagination_class = 'PageNumberPagination'
+class RecipeViewSet(ExcludeUpdateModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = None
 
     # filter_backends = ['SearchFilter or DjangoFilterBackend?']
     # filterset_class = '?'
     # search_fields = ('something',)
     # search_fields = ['=something', ]
-
-    # queryset = '?'
 
     # lookup_field = '?'
