@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from .fields import (CustomBase64ImageField, IngredientsJSONField,
+                     TagsPrimaryKeyRelatedField)
 from recipes.models import Ingredient, Recipe, Tag
 from users.models import Subscription, User
 
@@ -65,12 +67,15 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'name', 'color', 'slug']
 
 
-class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = serializers.JSONField()
-    tags = serializers.PrimaryKeyRelatedField(
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    ingredients = IngredientsJSONField()
+    tags = TagsPrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all()
     )
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
+    image = CustomBase64ImageField()
 
     def validate_ingredients(self, ingredients):
         if type(ingredients) is not list:
@@ -85,8 +90,8 @@ class RecipeSerializer(serializers.ModelSerializer):
                 )
             if (
                 len(ingredient) != 2
-                or 'id' not in ingredient.keys()
-                or 'amount' not in ingredient.keys()
+                or 'id' not in ingredient
+                or 'amount' not in ingredient
             ):
                 raise serializers.ValidationError(
                     'Информация о конкретном ингредиенте '
@@ -113,7 +118,17 @@ class RecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = [
             'id', 'tags', 'author', 'ingredients',
+            'is_favorited', 'is_in_shopping_cart',
             'name', 'image', 'text', 'cooking_time'
         ]
 
-        read_only_fields = ['id', 'author']
+        read_only_fields = [
+            'id', 'author', 'is_favorited', 'is_in_shopping_cart'
+        ]
+
+    def get_is_favorited(self, obj):
+        # На создании всегда False. Этот сериализатор для Post
+        return False
+
+    def get_is_in_shopping_cart(self, obj):
+        return False

@@ -19,7 +19,7 @@ class Tag(models.Model):
 class Recipe(models.Model):
     ingredients = JSONField()
     tags = models.ManyToManyField(Tag)
-    image = models.BinaryField()
+    image = models.ImageField(upload_to='recipes/images/')
     name = models.CharField(max_length=200)
     text = models.TextField()
     cooking_time = models.PositiveSmallIntegerField()
