@@ -1,23 +1,16 @@
 import base64
 import binascii
 
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-# from django.conf import settings
 from django.forms.models import model_to_dict
 from django.utils.translation import gettext_lazy as _
-# from dotenv import load_dotenv
 from drf_extra_fields.fields import Base64FieldMixin, Base64ImageField
 from rest_framework import serializers
 
 from api.utils import get_media_recipes_names
 from recipes.models import Ingredient, Tag
-
-# import os
-
-# from rest_framework.settings import api_settings
-
-# load_dotenv()
 
 
 class IngredientsJSONField(serializers.JSONField):
@@ -106,62 +99,60 @@ class CustomBase64ImageField(Base64ImageField):
         )
 
 
-# class RecipeImageField(serializers.ImageField):
+# class UserToRecipesRelationField(serializers.SerializerMethodField):
+#     """
+#     Для полей is_favourited и is_in_shopping_cart
+#     """
 
-#     def to_internal_value(self, data):
-#         data_type = str(type(data))
-#         return data_type.encode('utf-8')
-#         name_parse_start = data.index(':') + 1
-#         name_parse_end = data.index(';')
+#     def __init__(self, model=None, **kwargs):
+#         self.method_name = None
+#         self.model = model
+#         kwargs['source'] = '*'
+#         kwargs['read_only'] = True
+#         super().__init__(**kwargs)
 
-#         img_name = data[name_parse_start:name_parse_end]
-#         img_name = img_name.replace('/', '.')
-#         recipes_images_path = '\\recipes\\images\\'
-#         write_path = (
-#             settings.MEDIA_ROOT + recipes_images_path + f'{img_name}'
-#         )
+#     def bind(self, field_name, parent):
+#         self.method_name = 'get_field_value'
 
-#         data_parse_start = data.index(',') + 1
-#         img_data = data[data_parse_start:]
-#         img_data = img_data.encode('utf-8')
-
-#         with open(f'{write_path}', 'wb') as file:
-#             file.write(base64.decodebytes(img_data))
-
-#         recipes_images_path = recipes_images_path.replace('\\', '/')
-#         read_path = (
-#             'http://' + os.getenv('DB_HOST') + f'{recipes_images_path}'
-#             + f'{img_name}'
-#         )
-#         return read_path.encode('utf-8')
-
-#         return data.encode('utf-8')
-
-#         file_object = super().to_internal_value(data)
-#         django_field = self._DjangoImageField()
-#         django_field.error_messages = self.error_messages
-#         return django_field.clean(file_object)
+#         super().bind(field_name, parent)
 
 #     def to_representation(self, value):
-#         # return value
+#         method = getattr(self.parent, self.method_name)
+#         return method(value)
 
-#         # return str(type(value))
-#         value = value.decode('utf-8')
+#     def get_field_value(self, obj):
+#         user = self.context['request'].user
 
-#         if not value:
-#             return None
+#         try:
+#             model_instance = self.model.objects.get(user=user)
+#             if obj in model_instance.recipes:
+#                 return True
+#             return False
+#         except self.model.DoesNotExist:
+#             return False
 
-#         use_url = getattr(
-#             self, 'use_url', api_settings.UPLOADED_FILES_USE_URL
-#         )
-#         if use_url:
-#             try:
-#                 url = value.url
-#             except AttributeError:
-#                 return None
-#             request = self.context.get('request', None)
-#             if request is not None:
-#                 return request.build_absolute_uri(url)
-#             return url
 
-#         return value.name
+class UserToRecipesRelationField(serializers.ReadOnlyField):
+    """ Для полей is_favourited и is_in_shopping_cart """
+
+    def __init__(self, model, **kwargs):
+        kwargs['read_only'] = True
+        self.model = model
+        super().__init__(**kwargs)
+
+    # Функция нужна чтобы послать объект класса в to_representation
+    def get_attribute(self, instance):
+        return instance
+
+    def to_representation(self, obj):
+        user = self.context['request'].user
+        if type(user) is AnonymousUser:
+            return False
+
+        try:
+            model_instance = self.model.objects.get(user=user)
+            if obj in model_instance.recipes:
+                return True
+            return False
+        except self.model.DoesNotExist:
+            return False

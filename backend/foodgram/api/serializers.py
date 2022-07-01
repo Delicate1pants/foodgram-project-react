@@ -1,8 +1,9 @@
+from django.contrib.auth.models import AnonymousUser
 from rest_framework import serializers
 
 from .fields import (CustomBase64ImageField, IngredientsJSONField,
-                     TagsPrimaryKeyRelatedField)
-from recipes.models import Ingredient, Recipe, Tag
+                     TagsPrimaryKeyRelatedField, UserToRecipesRelationField)
+from recipes.models import Favourites, Ingredient, Recipe, Shopping_cart, Tag
 from users.models import Subscription, User
 
 
@@ -43,6 +44,8 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         author = self.context['request'].user
+        if type(author) is AnonymousUser:
+            return False
 
         try:
             Subscription.objects.get(user=obj, author=author)
@@ -67,14 +70,14 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'name', 'color', 'slug']
 
 
-class RecipeCreateSerializer(serializers.ModelSerializer):
+class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientsJSONField()
     tags = TagsPrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all()
     )
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = UserToRecipesRelationField(model=Favourites)
+    is_in_shopping_cart = UserToRecipesRelationField(model=Shopping_cart)
     image = CustomBase64ImageField()
 
     def validate_ingredients(self, ingredients):
@@ -126,9 +129,24 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'id', 'author', 'is_favorited', 'is_in_shopping_cart'
         ]
 
-    def get_is_favorited(self, obj):
-        # На создании всегда False. Этот сериализатор для Post
-        return False
+    # def get_is_favorited(self, obj):
+    #     user = self.context['request'].user
 
-    def get_is_in_shopping_cart(self, obj):
-        return False
+    #     try:
+    #         favourites = Favourites.objects.get(user=user)
+    #         if obj in favourites.recipes:
+    #             return True
+    #         return False
+    #     except Favourites.DoesNotExist:
+    #         return False
+
+    # def get_is_in_shopping_cart(self, obj):
+    #     user = self.context['request'].user
+
+    #     try:
+    #         shopping_cart = Shopping_cart.objects.get(user=user)
+    #         if obj in shopping_cart.recipes:
+    #             return True
+    #         return False
+    #     except Shopping_cart.DoesNotExist:
+    #         return False

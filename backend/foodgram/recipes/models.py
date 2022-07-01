@@ -28,3 +28,29 @@ class Recipe(models.Model):
         on_delete=models.CASCADE,
         related_name='author'
     )
+
+
+class Favourites(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favourites_owner'
+    )
+    recipes = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favourited_recipes'
+    )
+
+
+class Shopping_cart(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='cart_owner'
+    )
+    recipes = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipes_in_cart'
+    )
