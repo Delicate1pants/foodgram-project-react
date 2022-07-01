@@ -128,25 +128,3 @@ class RecipeSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'author', 'is_favorited', 'is_in_shopping_cart'
         ]
-
-    # def get_is_favorited(self, obj):
-    #     user = self.context['request'].user
-
-    #     try:
-    #         favourites = Favourites.objects.get(user=user)
-    #         if obj in favourites.recipes:
-    #             return True
-    #         return False
-    #     except Favourites.DoesNotExist:
-    #         return False
-
-    # def get_is_in_shopping_cart(self, obj):
-    #     user = self.context['request'].user
-
-    #     try:
-    #         shopping_cart = Shopping_cart.objects.get(user=user)
-    #         if obj in shopping_cart.recipes:
-    #             return True
-    #         return False
-    #     except Shopping_cart.DoesNotExist:
-    #         return False

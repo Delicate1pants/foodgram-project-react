@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from .mixins import ExcludeUpdateModelViewSet
 from .pagination import IngredientListPagination
+from .permissions import HasAccessOrReadOnly
 from .serializers import IngredientSerializer, RecipeSerializer, TagSerializer
 from recipes.models import Ingredient, Recipe, Tag
 
@@ -42,7 +43,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(ExcludeUpdateModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (HasAccessOrReadOnly,)
     pagination_class = None
 
     # filter_backends = ['SearchFilter or DjangoFilterBackend?']

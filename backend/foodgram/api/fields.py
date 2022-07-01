@@ -99,39 +99,6 @@ class CustomBase64ImageField(Base64ImageField):
         )
 
 
-# class UserToRecipesRelationField(serializers.SerializerMethodField):
-#     """
-#     Для полей is_favourited и is_in_shopping_cart
-#     """
-
-#     def __init__(self, model=None, **kwargs):
-#         self.method_name = None
-#         self.model = model
-#         kwargs['source'] = '*'
-#         kwargs['read_only'] = True
-#         super().__init__(**kwargs)
-
-#     def bind(self, field_name, parent):
-#         self.method_name = 'get_field_value'
-
-#         super().bind(field_name, parent)
-
-#     def to_representation(self, value):
-#         method = getattr(self.parent, self.method_name)
-#         return method(value)
-
-#     def get_field_value(self, obj):
-#         user = self.context['request'].user
-
-#         try:
-#             model_instance = self.model.objects.get(user=user)
-#             if obj in model_instance.recipes:
-#                 return True
-#             return False
-#         except self.model.DoesNotExist:
-#             return False
-
-
 class UserToRecipesRelationField(serializers.ReadOnlyField):
     """ Для полей is_favourited и is_in_shopping_cart """
 
