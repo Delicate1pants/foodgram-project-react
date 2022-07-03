@@ -15,6 +15,14 @@ class Tag(models.Model):
     color = models.CharField(max_length=7, validators=[HexCodeValidator])
     slug = models.SlugField(unique=True)
 
+    # def __str__(self):
+    #     return {
+    #         'id': self.id,
+    #         'name': self.name,
+    #         'color': self.color,
+    #         'slug': self.slug
+    #     }
+
 
 class Recipe(models.Model):
     ingredients = JSONField()

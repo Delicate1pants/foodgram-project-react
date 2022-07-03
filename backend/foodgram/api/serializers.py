@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AnonymousUser
+from django.forms.models import model_to_dict
 from rest_framework import serializers
 
 from .fields import (CustomBase64ImageField, IngredientsJSONField,
@@ -70,15 +71,34 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'name', 'color', 'slug']
 
 
+class NestedTagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = ['id', 'name', 'color', 'slug']
+        read_only_fields = ['color', 'slug']
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientsJSONField()
-    tags = TagsPrimaryKeyRelatedField(
-        many=True, queryset=Tag.objects.all()
-    )
+    tags = NestedTagSerializer(many=True)
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
     is_favorited = UserToRecipesRelationField(model=Favourites)
     is_in_shopping_cart = UserToRecipesRelationField(model=Shopping_cart)
     image = CustomBase64ImageField()
+
+    # Вложенный сериализатор хочет dict, привожу к нему
+    def to_internal_value(self, data):
+        tags = self.initial_data['tags']
+        proper_tags = []
+        for tag in tags:
+            # Почему-то если указать id, то оно не сохраняется в validated_data
+            # validated_data.tags будет пустым OrderedDict внутри метода create
+            # Поэтому сохраняю id через name
+            proper_tag = {'name': tag}
+            proper_tags.append(proper_tag)
+        data['tags'] = proper_tags
+        return super(RecipeSerializer, self).to_internal_value(data)
 
     def validate_ingredients(self, ingredients):
         if type(ingredients) is not list:
@@ -128,3 +148,20 @@ class RecipeSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'author', 'is_favorited', 'is_in_shopping_cart'
         ]
+
+    def create(self, validated_data):
+        tags = validated_data.pop('tags')
+
+        recipe = Recipe.objects.create(**validated_data)
+
+        for tag in tags:
+            # выскиваю id из name
+            current_tag = Tag.objects.get(
+                id=tag['name']
+            )
+
+            recipe.tags.add(current_tag)
+        return recipe
+
+    # def update(self, instance, validated_data):
+    #     pass
