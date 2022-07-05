@@ -1,12 +1,14 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser import utils
 from djoser.conf import settings
 from djoser.views import TokenCreateView as DjoserTokenCreateView
 from rest_framework import filters, status, viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from .filtersets import RecipeFilterSet
 from .mixins import ExcludeUpdateModelViewSet
-from .pagination import IngredientListPagination
+from .pagination import IngredientListPagination, RecipeListPagination
 from .permissions import HasAccessOrReadOnly
 from .serializers import IngredientSerializer, RecipeSerializer, TagSerializer
 from recipes.models import Ingredient, Recipe, Tag
@@ -44,11 +46,6 @@ class RecipeViewSet(ExcludeUpdateModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (HasAccessOrReadOnly,)
-    pagination_class = None
-
-    # filter_backends = ['SearchFilter or DjangoFilterBackend?']
-    # filterset_class = '?'
-    # search_fields = ('something',)
-    # search_fields = ['=something', ]
-
-    # lookup_field = '?'
+    pagination_class = RecipeListPagination
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilterSet

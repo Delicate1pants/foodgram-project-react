@@ -1,5 +1,4 @@
 from django.contrib.auth.models import AnonymousUser
-from django.forms.models import model_to_dict
 from rest_framework import serializers
 
 from .fields import (CustomBase64ImageField, IngredientsJSONField,
@@ -151,11 +150,12 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
+        # raise BaseException(tags)
 
         recipe = Recipe.objects.create(**validated_data)
 
         for tag in tags:
-            # выскиваю id из name
+            # вытаскиваю id из name
             current_tag = Tag.objects.get(
                 id=tag['name']
             )

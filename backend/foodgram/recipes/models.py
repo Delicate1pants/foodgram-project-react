@@ -37,6 +37,20 @@ class Recipe(models.Model):
         related_name='author'
     )
 
+    @property
+    def is_favourited(self):
+        """
+        Hook, за который будет дёргать фильтр
+        """
+        return None
+
+    @property
+    def is_in_shopping_cart(self):
+        """
+        Hook, за который будет дёргать фильтр
+        """
+        return None
+
 
 class Favourites(models.Model):
     user = models.ForeignKey(
