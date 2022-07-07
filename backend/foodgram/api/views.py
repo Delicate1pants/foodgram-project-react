@@ -3,7 +3,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser import utils
 from djoser.conf import settings
 from djoser.views import TokenCreateView as DjoserTokenCreateView
-from rest_framework import filters, mixins, status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -60,34 +60,36 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class SubscriptionViewSet(
-    mixins.ListModelMixin, mixins.CreateModelMixin,
-    mixins.DestroyModelMixin, viewsets.GenericViewSet
+    viewsets.ViewSet
 ):
-    serializer_class = SubscriptionSerializer
     permission_classes = (IsAuthenticated,)
 
-    def get_object(self):
-        author_id = self.kwargs.get('author_id')
-        get_object_or_404(User, id=author_id)
-        return Subscription.objects.filter(user=self.request.user)[0]
-
-    def get_queryset(self):
-        # author_id = self.kwargs.get('author_id')
-        # # if author_id is not None:
-        # User.objects.get(id=author_id)
-        # # except User.DoesNotExist:
-        # #     raise Response(
-        # #         status=status.HTTP_404_NOT_FOUND
-        # #     )
-        # return Subscription.objects.filter(user=self.request.user)
-        # # except Subscription.DoesNotExist:
-        # #     return Subscription.objects.none()
+    def list(*args, **kwargs):
         pass
 
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def create(*args, **kwargs):
+        pass
+
+    def destroy(self, request, pk=None):
+        user = request.user
+        author_obj = get_object_or_404(User, id=pk)
+
+        try:
+            instance = Subscription.objects.get(
+                user=user,
+                author=author_obj
+            )
+        except Subscription.DoesNotExist:
+            raise ValidationError('Вы не подписаны на этого пользователя')
+        instance.delete()
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+class ActualSubscriptionViewSet(SubscriptionViewSet):
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
 
     def perform_create(self, serializer):
         author_id = self.kwargs.get('author_id')
@@ -100,8 +102,3 @@ class SubscriptionViewSet(
             raise ValidationError('Подписка уже оформлена')
         except Subscription.DoesNotExist:
             serializer.save(author=author)
-
-    def perform_destroy(self, serializer):
-        author_id = self.kwargs.get('author_id')
-        author = get_object_or_404(User, id=author_id)
-        serializer.save(author=author)

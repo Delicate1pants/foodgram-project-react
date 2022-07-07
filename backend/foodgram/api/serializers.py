@@ -187,7 +187,11 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             'first_name', 'last_name', 'is_subscribed',
             'recipes', 'recipes_count'
         ]
-        read_only_fields = ['__all___']
+        read_only_fields = [
+            'user', 'author', 'email', 'id', 'username',
+            'first_name', 'last_name', 'is_subscribed',
+            'recipes', 'recipes_count'
+        ]
 
     def get_email(self, obj):
         return get_object_or_404(User, id=obj.author.id).email
