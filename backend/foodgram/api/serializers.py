@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AnonymousUser
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from .fields import (CustomBase64ImageField, IngredientsJSONField,
@@ -43,12 +44,12 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
         ]
 
     def get_is_subscribed(self, obj):
-        author = self.context['request'].user
-        if type(author) is AnonymousUser:
+        user = self.context['request'].user
+        if type(user) is AnonymousUser:
             return False
 
         try:
-            Subscription.objects.get(user=obj, author=author)
+            Subscription.objects.get(user=user, author=obj)
             return True
         except Subscription.DoesNotExist:
             return False
@@ -150,7 +151,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
-        # raise BaseException(tags)
+        raise BaseException(tags)
 
         recipe = Recipe.objects.create(**validated_data)
 
@@ -165,3 +166,57 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     # def update(self, instance, validated_data):
     #     pass
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    author = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    email = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    first_name = serializers.SerializerMethodField()
+    last_name = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subscription
+        fields = [
+            'user', 'author', 'email', 'id', 'username',
+            'first_name', 'last_name', 'is_subscribed',
+            'recipes', 'recipes_count'
+        ]
+        read_only_fields = ['__all___']
+
+    def get_email(self, obj):
+        return get_object_or_404(User, id=obj.author.id).email
+
+    def get_id(self, obj):
+        return get_object_or_404(User, id=obj.author.id).id
+
+    def get_username(self, obj):
+        return get_object_or_404(User, id=obj.author.id).username
+
+    def get_first_name(self, obj):
+        return get_object_or_404(User, id=obj.author.id).first_name
+
+    def get_last_name(self, obj):
+        return get_object_or_404(User, id=obj.author.id).last_name
+
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if type(user) is AnonymousUser:
+            return False
+
+        try:
+            Subscription.objects.get(user=user, author=obj.author)
+            return True
+        except Subscription.DoesNotExist:
+            return False
+
+    def get_recipes(self, obj):
+        return Recipe.objects.filter(author=obj.author).values()
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj.author).count()
