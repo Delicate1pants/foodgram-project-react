@@ -5,12 +5,15 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.forms.models import model_to_dict
+from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from drf_extra_fields.fields import Base64FieldMixin, Base64ImageField
 from rest_framework import serializers
+from rest_framework.serializers import CurrentUserDefault
 
 from api.utils import get_media_recipes_names
 from recipes.models import Ingredient, Tag
+from users.models import User
 
 
 class IngredientsJSONField(serializers.JSONField):
@@ -123,3 +126,9 @@ class UserToRecipesRelationField(serializers.ReadOnlyField):
             return False
         except self.model.DoesNotExist:
             return False
+
+
+class AuthorDefault(CurrentUserDefault):
+    def __call__(self, serializer_field):
+        author_id = serializer_field.context['author_id']
+        return get_object_or_404(User, id=author_id)

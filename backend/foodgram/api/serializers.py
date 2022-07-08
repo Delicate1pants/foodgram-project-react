@@ -2,8 +2,9 @@ from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .fields import (CustomBase64ImageField, IngredientsJSONField,
-                     TagsPrimaryKeyRelatedField, UserToRecipesRelationField)
+from .fields import (AuthorDefault, CustomBase64ImageField,
+                     IngredientsJSONField, TagsPrimaryKeyRelatedField,
+                     UserToRecipesRelationField)
 from recipes.models import Favourites, Ingredient, Recipe, Shopping_cart, Tag
 from users.models import Subscription, User
 
@@ -170,7 +171,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    author = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    author = serializers.HiddenField(default=AuthorDefault())
     email = serializers.SerializerMethodField()
     id = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()

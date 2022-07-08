@@ -27,7 +27,7 @@ urlpatterns = [
         name='sub-list'
     ),
     path(
-        'v1/users/<int:pk>/subscribe/',
+        'v1/users/<int:author_id>/subscribe/',
         SubscriptionViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
         name='sub-detail'
     ),

@@ -63,16 +63,35 @@ class SubscriptionViewSet(
     viewsets.ViewSet
 ):
     permission_classes = (IsAuthenticated,)
+    serializer_class = SubscriptionSerializer
 
     def list(*args, **kwargs):
         pass
 
-    def create(*args, **kwargs):
-        pass
+    def create(self, request, author_id=None):
+        serializer = self.serializer_class(
+            data=request.data, context={
+                'request': request, 'author_id': author_id
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        author = serializer.validated_data.get('author')
+        user = serializer.validated_data.get('user')
+        if author == user:
+            raise ValidationError('Нельзя подписываться на самого себя')
+        try:
+            Subscription.objects.get(author=author, user=user)
+            raise ValidationError('Подписка уже оформлена')
+        except Subscription.DoesNotExist:
+            serializer.save(author=author)
+        return Response(
+            status=status.HTTP_201_CREATED,
+            data=serializer.data
+        )
 
-    def destroy(self, request, pk=None):
+    def destroy(self, request, author_id=None):
         user = request.user
-        author_obj = get_object_or_404(User, id=pk)
+        author_obj = get_object_or_404(User, id=author_id)
 
         try:
             instance = Subscription.objects.get(
@@ -85,20 +104,3 @@ class SubscriptionViewSet(
         return Response(
             status=status.HTTP_204_NO_CONTENT
         )
-
-
-class ActualSubscriptionViewSet(SubscriptionViewSet):
-    queryset = Subscription.objects.all()
-    serializer_class = SubscriptionSerializer
-
-    def perform_create(self, serializer):
-        author_id = self.kwargs.get('author_id')
-        author = get_object_or_404(User, id=author_id)
-        user = self.request.user
-        if author == user:
-            raise ValidationError('Нельзя подписываться на самого себя')
-        try:
-            Subscription.objects.get(author=author, user=user)
-            raise ValidationError('Подписка уже оформлена')
-        except Subscription.DoesNotExist:
-            serializer.save(author=author)
