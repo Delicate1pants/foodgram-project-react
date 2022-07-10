@@ -3,6 +3,8 @@ from django_filters import rest_framework as filters
 
 from recipes.models import Favourites, Recipe, Shopping_cart, User
 
+# from users.models import Subscription
+
 
 class RecipeFilterSet(filters.FilterSet):
     BOOLEAN_CHOICES = (
@@ -62,3 +64,16 @@ class RecipeFilterSet(filters.FilterSet):
     class Meta:
         model = Recipe
         fields = []
+
+
+# class RecipeLimitFilterSet(filters.FilterSet):
+#     recipes_limit = filters.NumberFilter(
+#         field_name='recipes_limit', method='filter_recipes_limit'
+#     )
+
+#     def filter_recipes_limit(self, queryset, name, value):
+#         return queryset
+
+#     class Meta:
+#         model = Subscription
+#         fields = []

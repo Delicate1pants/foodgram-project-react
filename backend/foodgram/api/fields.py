@@ -12,7 +12,7 @@ from rest_framework import serializers
 from rest_framework.serializers import CurrentUserDefault
 
 from api.utils import get_media_recipes_names
-from recipes.models import Ingredient, Tag
+from recipes.models import Ingredient
 from users.models import User
 
 
@@ -30,19 +30,6 @@ class IngredientsJSONField(serializers.JSONField):
             result.append(ingr_dict)
 
         return result
-
-
-class TagsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
-    def to_representation(self, tag):
-        if self.pk_field is not None:
-            return self.pk_field.to_representation(tag.pk)
-
-        tag_queryset = Tag.objects.get(
-            id=tag.id
-        )
-        tag_dict = model_to_dict(tag_queryset)
-
-        return tag_dict
 
 
 class CustomBase64ImageField(Base64ImageField):

@@ -3,8 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from .fields import (AuthorDefault, CustomBase64ImageField,
-                     IngredientsJSONField, TagsPrimaryKeyRelatedField,
-                     UserToRecipesRelationField)
+                     IngredientsJSONField, UserToRecipesRelationField)
 from recipes.models import Favourites, Ingredient, Recipe, Shopping_cart, Tag
 from users.models import Subscription, User
 
@@ -77,7 +76,12 @@ class NestedTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ['id', 'name', 'color', 'slug']
-        read_only_fields = ['color', 'slug']
+        read_only_fields = ['name', 'color', 'slug']
+        extra_kwargs = {
+            'id': {
+                'read_only': False
+            }
+        }
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -88,15 +92,12 @@ class RecipeSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = UserToRecipesRelationField(model=Shopping_cart)
     image = CustomBase64ImageField()
 
-    # Вложенный сериализатор хочет dict, привожу к нему
+    # NestedTagSerializer хочет dict, привожу к нему
     def to_internal_value(self, data):
         tags = self.initial_data['tags']
         proper_tags = []
         for tag in tags:
-            # Почему-то если указать id, то оно не сохраняется в validated_data
-            # validated_data.tags будет пустым OrderedDict внутри метода create
-            # Поэтому сохраняю id через name
-            proper_tag = {'name': tag}
+            proper_tag = {'id': tag}
             proper_tags.append(proper_tag)
         data['tags'] = proper_tags
         return super(RecipeSerializer, self).to_internal_value(data)
@@ -152,17 +153,15 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
-        raise BaseException(tags)
 
         recipe = Recipe.objects.create(**validated_data)
 
         for tag in tags:
-            # вытаскиваю id из name
             current_tag = Tag.objects.get(
-                id=tag['name']
+                id=tag['id']
             )
-
             recipe.tags.add(current_tag)
+
         return recipe
 
     # def update(self, instance, validated_data):
@@ -221,7 +220,19 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             return False
 
     def get_recipes(self, obj):
-        return Recipe.objects.filter(author=obj.author).values()
+        limit = int(self.context['recipes_limit'])
+        # Фильтрация
+        qs = Recipe.objects.filter(author=obj.author).values()[:limit]
+        # Вывожу только требуемые поля
+        result = []
+        for i in range(len(qs)):
+            obj_dict = {}
+            obj_dict['id'] = qs[i]['id']
+            obj_dict['name'] = qs[i]['name']
+            obj_dict['image'] = qs[i]['image']
+            obj_dict['cooking_time'] = qs[i]['cooking_time']
+            result.append(obj_dict)
+        return result
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()

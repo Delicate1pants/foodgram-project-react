@@ -145,7 +145,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'api.pagination.UserListPagination',
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.ListPagination',
     'PAGE_SIZE': 1
 }
 

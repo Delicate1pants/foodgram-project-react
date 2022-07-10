@@ -41,7 +41,7 @@ class Subscription(models.Model):
     )
 
     @property
-    def recipes(self):
+    def recipes_limit(self):
         """
         Hook, за который будет дёргать фильтр
         """

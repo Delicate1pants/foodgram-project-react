@@ -3,13 +3,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser import utils
 from djoser.conf import settings
 from djoser.views import TokenCreateView as DjoserTokenCreateView
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .filtersets import RecipeFilterSet
-from .pagination import IngredientListPagination, RecipeListPagination
+from .pagination import IngredientListPagination, ListPagination
 from .permissions import HasAccessOrReadOnly
 from .serializers import (IngredientSerializer, RecipeSerializer,
                           SubscriptionSerializer, TagSerializer)
@@ -51,7 +51,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (HasAccessOrReadOnly,)
-    pagination_class = RecipeListPagination
+    pagination_class = ListPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilterSet
 
@@ -60,13 +60,37 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class SubscriptionViewSet(
-    viewsets.ViewSet
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
 ):
     permission_classes = (IsAuthenticated,)
     serializer_class = SubscriptionSerializer
+    # filter_backends = (DjangoFilterBackend,)
+    # filterset_class = RecipeLimitFilterSet
 
-    def list(*args, **kwargs):
-        pass
+    def get_queryset(self):
+        return Subscription.objects.filter(user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = Subscription.objects.filter(user=request.user)
+        pagination = ListPagination()
+        # filtered_qs = self.filter_queryset(queryset=queryset)
+        final_qs = pagination.paginate_queryset(
+            queryset=queryset, request=request
+        )
+        serializer = self.serializer_class(
+            final_qs, many=True, context={
+                'request': request,
+                # Фильтровать буду в сериализаторе,
+                # с SerializerMethodField так удобнее
+                'recipes_limit': self.request.query_params.get('recipes_limit')
+            }
+        )
+        return pagination.get_paginated_response(
+            data=serializer.data
+        )
 
     def create(self, request, author_id=None):
         serializer = self.serializer_class(
