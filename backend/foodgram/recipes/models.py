@@ -1,4 +1,4 @@
-from django.contrib.postgres.fields import JSONField
+# from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from api.validators import HexCodeValidator
@@ -17,7 +17,7 @@ class IngredientAmount(models.Model):
         on_delete=models.CASCADE,
         related_name='ingredient'
     )
-    amount = models.IntegerField()
+    amount = models.PositiveIntegerField()
 
 
 class Tag(models.Model):
@@ -27,8 +27,8 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
-    # ingredients = models.ManyToManyField(IngredientAmount)
-    ingredients = JSONField()
+    ingredients = models.ManyToManyField(IngredientAmount)
+    # ingredients = JSONField()
     tags = models.ManyToManyField(Tag)
     image = models.ImageField(upload_to='recipes/images/')
     name = models.CharField(max_length=200)
