@@ -3,8 +3,10 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from .fields import (AuthorDefault, CustomBase64ImageField,
-                     IngredientsJSONField, UserToRecipesRelationField)
-from recipes.models import Favourites, Ingredient, Recipe, Shopping_cart, Tag
+                     IngredientsJSONField, TagsPrimaryKeyRelatedField,
+                     UserToRecipesRelationField)
+from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
+                            Shopping_cart, Tag)
 from users.models import Subscription, User
 
 
@@ -63,6 +65,14 @@ class IngredientSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'name', 'measurement_unit']
 
 
+class IngredientAmountSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = IngredientAmount
+        fields = ['primary_key', 'amount']
+        # read_only_fields = ['name', 'measurement_unit']
+
+
 class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -71,36 +81,37 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'name', 'color', 'slug']
 
 
-class NestedTagSerializer(serializers.ModelSerializer):
+# class NestedTagSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = Tag
-        fields = ['id', 'name', 'color', 'slug']
-        read_only_fields = ['name', 'color', 'slug']
-        extra_kwargs = {
-            'id': {
-                'read_only': False
-            }
-        }
+#     class Meta:
+#         model = Tag
+#         fields = ['id', 'name', 'color', 'slug']
+#         read_only_fields = ['name', 'color', 'slug']
+#         extra_kwargs = {
+#             'id': {
+#                 'read_only': False  # иначе id не дойдут до def create
+#             }
+#         }
 
 
 class RecipeSerializer(serializers.ModelSerializer):
+    # ingredients = IngredientAmountSerializer(many=True)
     ingredients = IngredientsJSONField()
-    tags = NestedTagSerializer(many=True)
+    tags = TagsPrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
     is_favorited = UserToRecipesRelationField(model=Favourites)
     is_in_shopping_cart = UserToRecipesRelationField(model=Shopping_cart)
     image = CustomBase64ImageField()
 
     # NestedTagSerializer хочет dict, привожу к нему
-    def to_internal_value(self, data):
-        tags = self.initial_data['tags']
-        proper_tags = []
-        for tag in tags:
-            proper_tag = {'id': tag}
-            proper_tags.append(proper_tag)
-        data['tags'] = proper_tags
-        return super(RecipeSerializer, self).to_internal_value(data)
+    # def to_internal_value(self, data):
+    #     tags = self.initial_data['tags']
+    #     proper_tags = []
+    #     for tag in tags:
+    #         proper_tag = {'id': tag}
+    #         proper_tags.append(proper_tag)
+    #     data['tags'] = proper_tags
+    #     return super(RecipeSerializer, self).to_internal_value(data)
 
     def validate_ingredients(self, ingredients):
         if type(ingredients) is not list:
@@ -137,7 +148,7 @@ class RecipeSerializer(serializers.ModelSerializer):
                     'Некорректный тип данных для amount, ожидался int'
                 )
 
-        return ingredients
+            return ingredients
 
     class Meta:
         model = Recipe
@@ -153,14 +164,12 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
+        # ingredients = validated_data.pop('ingredients')
+        # raise BaseException(ingredients)
 
         recipe = Recipe.objects.create(**validated_data)
 
-        for tag in tags:
-            current_tag = Tag.objects.get(
-                id=tag['id']
-            )
-            recipe.tags.add(current_tag)
+        recipe.tags.add(*tags)
 
         return recipe
 

@@ -16,6 +16,19 @@ from recipes.models import Ingredient
 from users.models import User
 
 
+class TagsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def to_representation(self, tag_obj):
+        if self.pk_field is not None:
+            return self.pk_field.to_representation(tag_obj.pk)
+
+        return {
+            'id': tag_obj.id,
+            'name': tag_obj.name,
+            'color': tag_obj.color,
+            'slug': tag_obj.slug
+        }
+
+
 class IngredientsJSONField(serializers.JSONField):
     def to_representation(self, ingredients):
         result = []

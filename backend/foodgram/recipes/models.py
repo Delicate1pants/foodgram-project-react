@@ -10,21 +10,24 @@ class Ingredient(models.Model):
     measurement_unit = models.CharField(max_length=150)
 
 
+class IngredientAmount(models.Model):
+    primary_key = models.AutoField(primary_key=True)
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        related_name='ingredient'
+    )
+    amount = models.IntegerField()
+
+
 class Tag(models.Model):
     name = models.CharField(max_length=150)
     color = models.CharField(max_length=7, validators=[HexCodeValidator])
     slug = models.SlugField(unique=True)
 
-    # def __str__(self):
-    #     return {
-    #         'id': self.id,
-    #         'name': self.name,
-    #         'color': self.color,
-    #         'slug': self.slug
-    #     }
-
 
 class Recipe(models.Model):
+    # ingredients = models.ManyToManyField(IngredientAmount)
     ingredients = JSONField()
     tags = models.ManyToManyField(Tag)
     image = models.ImageField(upload_to='recipes/images/')
