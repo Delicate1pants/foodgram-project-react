@@ -160,17 +160,17 @@ class FavouritesViewSet(
             data=serializer.data
         )
 
-    def destroy(self, request, author_id=None):
+    def destroy(self, request, recipe_id=None):
         user = request.user
-        author_obj = get_object_or_404(User, id=author_id)
+        recipe = get_object_or_404(Recipe, id=recipe_id)
 
         try:
-            instance = Subscription.objects.get(
+            instance = Favourites.objects.get(
                 user=user,
-                author=author_obj
+                recipe=recipe
             )
-        except Subscription.DoesNotExist:
-            raise ValidationError('Вы не подписаны на этого пользователя')
+        except Favourites.DoesNotExist:
+            raise ValidationError('Этого рецепта нет в избранном')
         instance.delete()
         return Response(
             status=status.HTTP_204_NO_CONTENT
