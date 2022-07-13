@@ -2,8 +2,8 @@ from django.urls import include, path
 from djoser.views import TokenDestroyView as DjoserTokenDestroyView
 from rest_framework import routers
 
-from .views import (IngredientViewSet, RecipeViewSet, SubscriptionViewSet,
-                    TagViewSet, TokenCreateView)
+from .views import (FavouritesViewSet, IngredientViewSet, RecipeViewSet,
+                    SubscriptionViewSet, TagViewSet, TokenCreateView)
 
 app_name = 'api'
 
@@ -11,14 +11,6 @@ router = routers.SimpleRouter()
 router.register(r'ingredients', IngredientViewSet, basename='ingredients')
 router.register(r'tags', TagViewSet, basename='tags')
 router.register(r'recipes', RecipeViewSet, basename='recipes')
-# router.register(
-#     r'users/subscriptions',
-#     SubscriptionViewSet, basename='subscriptions'
-# )
-# router.register(
-#     r'users/(?P<author_id>\d+)/subscribe',
-#     SubscriptionViewSet, basename='subscribe'
-# )
 
 urlpatterns = [
     path(
@@ -30,6 +22,11 @@ urlpatterns = [
         'v1/users/<int:author_id>/subscribe/',
         SubscriptionViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
         name='sub-detail'
+    ),
+    path(
+        'v1/recipes/<int:recipe_id>/favorite/',
+        FavouritesViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
+        name='favorite'
     ),
     path('v1/', include(router.urls)),
     path('v1/', include('djoser.urls')),

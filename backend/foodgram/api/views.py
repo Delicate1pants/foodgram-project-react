@@ -11,9 +11,10 @@ from rest_framework.response import Response
 from .filtersets import RecipeFilterSet
 from .pagination import IngredientListPagination, ListPagination
 from .permissions import HasAccessOrReadOnly
-from .serializers import (IngredientSerializer, RecipeSerializer,
-                          SubscriptionSerializer, TagSerializer)
-from recipes.models import Ingredient, Recipe, Tag
+from .serializers import (FavouritesSerializer, IngredientSerializer,
+                          RecipeSerializer, SubscriptionSerializer,
+                          TagSerializer)
+from recipes.models import Favourites, Ingredient, Recipe, Tag
 from users.models import Subscription, User
 
 
@@ -108,6 +109,52 @@ class SubscriptionViewSet(
             raise ValidationError('Подписка уже оформлена')
         except Subscription.DoesNotExist:
             serializer.save(author=author)
+        return Response(
+            status=status.HTTP_201_CREATED,
+            data=serializer.data
+        )
+
+    def destroy(self, request, author_id=None):
+        user = request.user
+        author_obj = get_object_or_404(User, id=author_id)
+
+        try:
+            instance = Subscription.objects.get(
+                user=user,
+                author=author_obj
+            )
+        except Subscription.DoesNotExist:
+            raise ValidationError('Вы не подписаны на этого пользователя')
+        instance.delete()
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+class FavouritesViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = FavouritesSerializer
+    # filter_backends = (DjangoFilterBackend,)
+    # filterset_class = RecipeLimitFilterSet
+
+    def create(self, request, recipe_id=None):
+        serializer = self.serializer_class(
+            data=request.data, context={
+                'request': request, 'recipe_id': recipe_id
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data.get('user')
+        recipe = serializer.validated_data.get('recipe')
+        try:
+            Favourites.objects.get(user=user, recipe=recipe)
+            raise ValidationError('Рецепт уже есть в избранном')
+        except Favourites.DoesNotExist:
+            serializer.save()
         return Response(
             status=status.HTTP_201_CREATED,
             data=serializer.data

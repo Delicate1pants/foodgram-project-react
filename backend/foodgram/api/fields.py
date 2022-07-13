@@ -12,7 +12,7 @@ from rest_framework import serializers
 from rest_framework.serializers import CurrentUserDefault
 
 from api.utils import get_media_recipes_names
-from recipes.models import Ingredient
+from recipes.models import Ingredient, Recipe
 from users.models import User
 
 
@@ -132,3 +132,9 @@ class AuthorDefault(CurrentUserDefault):
     def __call__(self, serializer_field):
         author_id = serializer_field.context['author_id']
         return get_object_or_404(User, id=author_id)
+
+
+class RecipeDefault(CurrentUserDefault):
+    def __call__(self, serializer_field):
+        recipe_id = serializer_field.context['recipe_id']
+        return get_object_or_404(Recipe, id=recipe_id)

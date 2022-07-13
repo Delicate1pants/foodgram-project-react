@@ -2,7 +2,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .fields import (AuthorDefault, CustomBase64ImageField,
+from .fields import (AuthorDefault, CustomBase64ImageField, RecipeDefault,
                      TagsPrimaryKeyRelatedField, UserToRecipesRelationField)
 from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
                             Shopping_cart, Tag)
@@ -222,6 +222,19 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
 
+# class ShortRecipeSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = Recipe
+#         fields = [
+#             'id', 'name', 'image', 'cooking_time'
+#         ]
+
+#         read_only_fields = [
+#             'id', 'name', 'image', 'cooking_time'
+#         ]
+
+
 class SubscriptionSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     author = serializers.HiddenField(default=AuthorDefault())
@@ -290,3 +303,21 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()
+
+
+class FavouritesSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    recipe = serializers.HiddenField(default=RecipeDefault())
+    id = serializers.IntegerField(source='recipe.id', read_only=True)
+    name = serializers.CharField(source='recipe.name', read_only=True)
+    image = CustomBase64ImageField(source='recipe.image', read_only=True)
+    cooking_time = serializers.IntegerField(
+        source='recipe.cooking_time', read_only=True
+    )
+
+    class Meta:
+        model = Favourites
+        fields = [
+            'user', 'recipe', 'id', 'name', 'image',
+            'cooking_time'
+        ]

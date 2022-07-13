@@ -56,12 +56,13 @@ class Recipe(models.Model):
 
 
 class Favourites(models.Model):
+    primary_key = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='favourites_owner'
     )
-    recipes = models.ForeignKey(
+    recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         related_name='favourited_recipes'
@@ -69,12 +70,13 @@ class Favourites(models.Model):
 
 
 class Shopping_cart(models.Model):
+    primary_key = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='cart_owner'
     )
-    recipes = models.ForeignKey(
+    recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         related_name='recipes_in_cart'
