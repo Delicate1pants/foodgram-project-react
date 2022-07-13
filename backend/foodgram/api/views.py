@@ -12,9 +12,9 @@ from .filtersets import RecipeFilterSet
 from .pagination import IngredientListPagination, ListPagination
 from .permissions import HasAccessOrReadOnly
 from .serializers import (FavouritesSerializer, IngredientSerializer,
-                          RecipeSerializer, SubscriptionSerializer,
-                          TagSerializer)
-from recipes.models import Favourites, Ingredient, Recipe, Tag
+                          RecipeSerializer, ShoppingCartSerializer,
+                          SubscriptionSerializer, TagSerializer)
+from recipes.models import Favourites, Ingredient, Recipe, Shopping_cart, Tag
 from users.models import Subscription, User
 
 
@@ -138,8 +138,6 @@ class FavouritesViewSet(
 ):
     permission_classes = (IsAuthenticated,)
     serializer_class = FavouritesSerializer
-    # filter_backends = (DjangoFilterBackend,)
-    # filterset_class = RecipeLimitFilterSet
 
     def create(self, request, recipe_id=None):
         serializer = self.serializer_class(
@@ -171,6 +169,50 @@ class FavouritesViewSet(
             )
         except Favourites.DoesNotExist:
             raise ValidationError('Этого рецепта нет в избранном')
+        instance.delete()
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+class ShoppingCartViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ShoppingCartSerializer
+
+    def create(self, request, recipe_id=None):
+        serializer = self.serializer_class(
+            data=request.data, context={
+                'request': request, 'recipe_id': recipe_id
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data.get('user')
+        recipe = serializer.validated_data.get('recipe')
+        try:
+            Shopping_cart.objects.get(user=user, recipe=recipe)
+            raise ValidationError('Рецепт уже есть в списке покупок')
+        except Shopping_cart.DoesNotExist:
+            serializer.save()
+        return Response(
+            status=status.HTTP_201_CREATED,
+            data=serializer.data
+        )
+
+    def destroy(self, request, recipe_id=None):
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+
+        try:
+            instance = Shopping_cart.objects.get(
+                user=user,
+                recipe=recipe
+            )
+        except Shopping_cart.DoesNotExist:
+            raise ValidationError('Этого рецепта нет в списке покупок')
         instance.delete()
         return Response(
             status=status.HTTP_204_NO_CONTENT

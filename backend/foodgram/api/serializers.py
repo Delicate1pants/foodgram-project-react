@@ -92,74 +92,13 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'name', 'color', 'slug']
 
 
-# class NestedTagSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Tag
-#         fields = ['id', 'name', 'color', 'slug']
-#         read_only_fields = ['name', 'color', 'slug']
-#         extra_kwargs = {
-#             'id': {
-#                 'read_only': False  # иначе id не дойдут до def create
-#             }
-#         }
-
-
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(many=True)
-    # ingredients = IngredientsJSONField()
     tags = TagsPrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
     is_favorited = UserToRecipesRelationField(model=Favourites)
     is_in_shopping_cart = UserToRecipesRelationField(model=Shopping_cart)
     image = CustomBase64ImageField()
-
-    # NestedTagSerializer хочет dict, привожу к нему
-    # def to_internal_value(self, data):
-    #     tags = self.initial_data['tags']
-    #     proper_tags = []
-    #     for tag in tags:
-    #         proper_tag = {'id': tag}
-    #         proper_tags.append(proper_tag)
-    #     data['tags'] = proper_tags
-    #     return super(RecipeSerializer, self).to_internal_value(data)
-
-    # def validate_ingredients(self, ingredients):
-    #     if type(ingredients) is not list:
-    #         raise serializers.ValidationError(
-    #             'Некорректный тип данных для ингредиентов, ожидался list'
-    #         )
-    #     for ingredient in ingredients:
-    #         if type(ingredient) is not dict:
-    #             raise serializers.ValidationError(
-    #                 'Некорректный тип данных с информацией '
-    #                 'о конкретном ингредиенте, ожидался dict'
-    #             )
-    #         if (
-    #             len(ingredient) != 2
-    #             or 'id' not in ingredient
-    #             or 'amount' not in ingredient
-    #         ):
-    #             raise serializers.ValidationError(
-    #                 'Информация о конкретном ингредиенте '
-    #                 'должна содержать 2 поля: id и amount'
-    #             )
-    #         if type(ingredient['id']) is not int:
-    #             raise serializers.ValidationError(
-    #                 'Некорректный тип данных для id, ожидался int'
-    #             )
-    #         try:
-    #             Ingredient.objects.get(id=ingredient['id'])
-    #         except Ingredient.DoesNotExist:
-    #             raise serializers.ValidationError(
-    #                 f'Ингредиент с id {ingredient["id"]} не найден'
-    #             )
-    #         if type(ingredient['amount']) is not int:
-    #             raise serializers.ValidationError(
-    #                 'Некорректный тип данных для amount, ожидался int'
-    #             )
-
-    #         return ingredients
 
     class Meta:
         model = Recipe
@@ -176,8 +115,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        # raise BaseException(ingredients[0]['ingredient'])
-        # raise BaseException(ingredients[0]['amount'])
 
         recipe = Recipe.objects.create(**validated_data)
 
@@ -198,11 +135,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
-        # raise BaseException(tags)
         ingredients = validated_data.pop('ingredients')
 
-        # for field in validated_data:
-        #     raise BaseException(validated_data)
         recipe = super().update(instance, validated_data)
 
         recipe.tags.set(tags)
@@ -214,25 +148,11 @@ class RecipeSerializer(serializers.ModelSerializer):
             current_ingredient, status = IngredientAmount.objects.get_or_create(  # noqa E501
                 ingredient=ingredient_id, amount=amount
             )
-            # recipe.ingredients.set(current_ingredient)
             current_ingredients.append(current_ingredient)
 
         recipe.ingredients.set(current_ingredients)
 
         return recipe
-
-
-# class ShortRecipeSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Recipe
-#         fields = [
-#             'id', 'name', 'image', 'cooking_time'
-#         ]
-
-#         read_only_fields = [
-#             'id', 'name', 'image', 'cooking_time'
-#         ]
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -321,3 +241,10 @@ class FavouritesSerializer(serializers.ModelSerializer):
             'user', 'recipe', 'id', 'name', 'image',
             'cooking_time'
         ]
+
+
+class ShoppingCartSerializer(FavouritesSerializer):
+
+    class Meta:
+        model = Shopping_cart
+        fields = ['user', 'recipe', 'id', 'name', 'image', 'cooking_time']

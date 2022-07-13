@@ -3,7 +3,8 @@ from djoser.views import TokenDestroyView as DjoserTokenDestroyView
 from rest_framework import routers
 
 from .views import (FavouritesViewSet, IngredientViewSet, RecipeViewSet,
-                    SubscriptionViewSet, TagViewSet, TokenCreateView)
+                    ShoppingCartViewSet, SubscriptionViewSet, TagViewSet,
+                    TokenCreateView)
 
 app_name = 'api'
 
@@ -27,6 +28,11 @@ urlpatterns = [
         'v1/recipes/<int:recipe_id>/favorite/',
         FavouritesViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
         name='favorite'
+    ),
+    path(
+        'v1/recipes/<int:recipe_id>/shopping_cart/',
+        ShoppingCartViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
+        name='shopping_cart'
     ),
     path('v1/', include(router.urls)),
     path('v1/', include('djoser.urls')),
