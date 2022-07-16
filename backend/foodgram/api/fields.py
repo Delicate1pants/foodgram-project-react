@@ -120,10 +120,8 @@ class UserToRecipesRelationField(serializers.ReadOnlyField):
             return False
 
         try:
-            model_instance = self.model.objects.get(user=user)
-            if obj in model_instance.recipes:
-                return True
-            return False
+            self.model.objects.get(user=user, recipe=obj)
+            return True
         except self.model.DoesNotExist:
             return False
 
