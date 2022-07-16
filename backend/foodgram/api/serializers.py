@@ -1,5 +1,4 @@
 from django.contrib.auth.models import AnonymousUser
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from .fields import (AuthorDefault, CustomBase64ImageField, RecipeDefault,
@@ -158,11 +157,15 @@ class RecipeSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     author = serializers.HiddenField(default=AuthorDefault())
-    email = serializers.SerializerMethodField()
-    id = serializers.SerializerMethodField()
-    username = serializers.SerializerMethodField()
-    first_name = serializers.SerializerMethodField()
-    last_name = serializers.SerializerMethodField()
+    email = serializers.EmailField(source='author.email', read_only=True)
+    id = serializers.IntegerField(source='author.id', read_only=True)
+    username = serializers.CharField(source='author.username', read_only=True)
+    first_name = serializers.CharField(
+        source='author.first_name', read_only=True
+    )
+    last_name = serializers.CharField(
+        source='author.last_name', read_only=True
+    )
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
@@ -180,21 +183,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             'recipes', 'recipes_count'
         ]
 
-    def get_email(self, obj):
-        return get_object_or_404(User, id=obj.author.id).email
-
-    def get_id(self, obj):
-        return get_object_or_404(User, id=obj.author.id).id
-
-    def get_username(self, obj):
-        return get_object_or_404(User, id=obj.author.id).username
-
-    def get_first_name(self, obj):
-        return get_object_or_404(User, id=obj.author.id).first_name
-
-    def get_last_name(self, obj):
-        return get_object_or_404(User, id=obj.author.id).last_name
-
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         if type(user) is AnonymousUser:
@@ -207,9 +195,13 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             return False
 
     def get_recipes(self, obj):
-        limit = int(self.context['recipes_limit'])
         # Фильтрация
-        qs = Recipe.objects.filter(author=obj.author).values()[:limit]
+        limit = self.context['recipes_limit']
+        if limit is not None:
+            limit = int(limit)
+            qs = Recipe.objects.filter(author=obj.author).values()[:limit]
+        else:
+            qs = Recipe.objects.filter(author=obj.author).values()
         # Вывожу только требуемые поля
         result = []
         for i in range(len(qs)):

@@ -92,7 +92,8 @@ class SubscriptionViewSet(
     def create(self, request, author_id=None):
         serializer = self.serializer_class(
             data=request.data, context={
-                'request': request, 'author_id': author_id
+                'request': request, 'author_id': author_id,
+                'recipes_limit': self.request.query_params.get('recipes_limit')
             }
         )
         serializer.is_valid(raise_exception=True)
