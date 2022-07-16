@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser import utils
@@ -68,8 +69,6 @@ class SubscriptionViewSet(
 ):
     permission_classes = (IsAuthenticated,)
     serializer_class = SubscriptionSerializer
-    # filter_backends = (DjangoFilterBackend,)
-    # filterset_class = RecipeLimitFilterSet
 
     def get_queryset(self):
         return Subscription.objects.filter(user=self.request.user)
@@ -77,15 +76,12 @@ class SubscriptionViewSet(
     def list(self, request, *args, **kwargs):
         queryset = Subscription.objects.filter(user=request.user)
         pagination = ListPagination()
-        # filtered_qs = self.filter_queryset(queryset=queryset)
         final_qs = pagination.paginate_queryset(
             queryset=queryset, request=request
         )
         serializer = self.serializer_class(
             final_qs, many=True, context={
                 'request': request,
-                # Фильтровать буду в сериализаторе,
-                # с SerializerMethodField так удобнее
                 'recipes_limit': self.request.query_params.get('recipes_limit')
             }
         )
@@ -178,10 +174,14 @@ class FavouritesViewSet(
 class ShoppingCartViewSet(
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
     viewsets.GenericViewSet
 ):
     permission_classes = (IsAuthenticated,)
     serializer_class = ShoppingCartSerializer
+
+    def get_queryset(self):
+        return Shopping_cart.objects.filter(user=self.request.user)
 
     def create(self, request, recipe_id=None):
         serializer = self.serializer_class(
@@ -217,3 +217,39 @@ class ShoppingCartViewSet(
         return Response(
             status=status.HTTP_204_NO_CONTENT
         )
+
+    def list(self, request):
+        qset = self.get_queryset()
+        sum_amount_for_ingr = {}
+
+        # Наполняю словарь с id ингредиентов и общее количество для каждого
+        for obj in qset:
+            ingredients_amounts = obj.recipe.ingredients.all()
+            for obj in ingredients_amounts:
+                ingr_id = str(obj.ingredient_id)
+                if ingr_id in sum_amount_for_ingr:
+                    sum_amount_for_ingr[ingr_id]['amount'] += obj.amount
+                    continue
+                sum_amount_for_ingr[ingr_id] = {'amount': obj.amount}
+
+        # Добавляю информацию о имени и единице измерения
+        ingredients = Ingredient.objects.filter(
+            id__in=sum_amount_for_ingr.keys()
+        )
+        for ingr in ingredients:
+            ingr_id = str(ingr.id)
+            sum_amount_for_ingr[ingr_id]['measurement_unit'] = ingr.measurement_unit  # noqa E501
+            sum_amount_for_ingr[ingr_id]['name'] = ingr.name
+
+        # Перевожу информацию в строку
+        text = ''
+
+        for id in sum_amount_for_ingr:
+            ingr_info = sum_amount_for_ingr[id]
+            text += f'{ingr_info["name"]} ({ingr_info["measurement_unit"]}) — {ingr_info["amount"]}\n'  # noqa E501
+
+        # Строку перевожу в байты на вывод
+        file_as_bytes = str.encode(text)
+
+        response = HttpResponse(file_as_bytes)
+        return response

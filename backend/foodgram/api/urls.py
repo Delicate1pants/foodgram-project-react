@@ -34,6 +34,11 @@ urlpatterns = [
         ShoppingCartViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
         name='shopping_cart'
     ),
+    path(
+        'v1/recipes/download_shopping_cart/',
+        ShoppingCartViewSet.as_view({'get': 'list'}),
+        name='download_shopping_cart'
+    ),
     path('v1/', include(router.urls)),
     path('v1/', include('djoser.urls')),
     path('v1/auth/token/login/', TokenCreateView.as_view()),
