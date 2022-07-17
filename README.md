@@ -1,1 +1,3 @@
-# praktikum_new_diplom
+# Foodgram
+
+Скоро запуск! В течение недели, надеюсь
