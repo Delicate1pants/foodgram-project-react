@@ -40,13 +40,6 @@ class Subscription(models.Model):
         related_name='subscribed_to'
     )
 
-    @property
-    def recipes_limit(self):
-        """
-        Hook, за который будет дёргать фильтр
-        """
-        return None
-
     class Meta:
         constraints = [
             models.UniqueConstraint(

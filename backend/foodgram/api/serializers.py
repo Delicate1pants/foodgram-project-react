@@ -97,7 +97,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
     is_favorited = UserToRecipesRelationField(model=Favourite)
     is_in_shopping_cart = UserToRecipesRelationField(model=Shopping_cart)
-    image = CustomBase64ImageField()
+    image = CustomBase64ImageField(use_url=True)
 
     class Meta:
         model = Recipe
@@ -208,11 +208,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             ).order_by('-id').values()
         # Вывожу только требуемые поля
         result = []
+        request = self.context['request']
         for i in range(len(qs)):
             obj_dict = {}
             obj_dict['id'] = qs[i]['id']
             obj_dict['name'] = qs[i]['name']
-            obj_dict['image'] = qs[i]['image']
+            obj_dict['image'] = request.build_absolute_uri(qs[i]['image'])
             obj_dict['cooking_time'] = qs[i]['cooking_time']
             result.append(obj_dict)
         return result
