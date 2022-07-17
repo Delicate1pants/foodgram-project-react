@@ -50,7 +50,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
 
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.all().order_by('-id')
     serializer_class = RecipeSerializer
     permission_classes = (HasAccessOrReadOnly,)
     pagination_class = ListPagination

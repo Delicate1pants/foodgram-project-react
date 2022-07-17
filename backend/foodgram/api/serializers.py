@@ -199,9 +199,13 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         limit = self.context['recipes_limit']
         if limit is not None:
             limit = int(limit)
-            qs = Recipe.objects.filter(author=obj.author).values()[:limit]
+            qs = Recipe.objects.filter(
+                author=obj.author
+            ).order_by('-id').values()[:limit]
         else:
-            qs = Recipe.objects.filter(author=obj.author).values()
+            qs = Recipe.objects.filter(
+                author=obj.author
+            ).order_by('-id').values()
         # Вывожу только требуемые поля
         result = []
         for i in range(len(qs)):
