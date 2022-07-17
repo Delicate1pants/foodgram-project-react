@@ -23,41 +23,37 @@ class RecipeFilterSet(filters.FilterSet):
 
     def filter_is_favourited(self, queryset, name, value):
         user = self.request.user
-        queryset = Recipe.objects.all()
-
         is_favourited = self.request.query_params.get('is_favourited')
-        if is_favourited == '1':
-            if type(user) is AnonymousUser:
-                queryset = Recipe.objects.none()
-            else:
-                favourites = Favourite.objects.filter(user=user)
-                queryset = Recipe.objects.filter(id__in=favourites.recipes)
-        elif is_favourited == '0':
-            if type(user) is not AnonymousUser:
-                favourites = Favourite.objects.filter(user=user)
-                queryset = Recipe.objects.exclude(id__in=favourites.recipes)
 
-        return queryset
+        if type(user) is not AnonymousUser:
+            favourites = Favourite.objects.filter(
+                user=user
+            ).values_list('recipe')
+        else:
+            favourites = Favourite.objects.none()
+
+        if is_favourited == '1':
+            return Recipe.objects.filter(id__in=favourites)
+        elif is_favourited == '0':
+            return Recipe.objects.exclude(id__in=favourites)
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
-        queryset = Recipe.objects.all()
-
         is_in_shopping_cart = self.request.query_params.get(
             'is_in_shopping_cart'
         )
-        if is_in_shopping_cart == '1':
-            if type(user) is AnonymousUser:
-                queryset = Recipe.objects.none()
-            else:
-                cart = Shopping_cart.objects.filter(user=user)
-                queryset = Recipe.objects.filter(id__in=cart.recipes)
-        elif is_in_shopping_cart == '0':
-            if type(user) is not AnonymousUser:
-                cart = Shopping_cart.objects.filter(user=user)
-                queryset = Recipe.objects.exclude(id__in=cart.recipes)
 
-        return queryset
+        if type(user) is not AnonymousUser:
+            shopping_cart = Shopping_cart.objects.filter(
+                user=user
+            ).values_list('recipe')
+        else:
+            shopping_cart = Shopping_cart.objects.none()
+
+        if is_in_shopping_cart == '1':
+            return Recipe.objects.filter(id__in=shopping_cart)
+        elif is_in_shopping_cart == '0':
+            return Recipe.objects.exclude(id__in=shopping_cart)
 
     class Meta:
         model = Recipe
