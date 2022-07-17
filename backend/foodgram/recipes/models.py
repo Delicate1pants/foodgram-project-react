@@ -52,8 +52,13 @@ class Recipe(models.Model):
         """
         return None
 
+    # для админки
+    @property
+    def favourites_count(self):
+        return Favourite.objects.filter(recipe=self.id).count()
 
-class Favourites(models.Model):
+
+class Favourite(models.Model):
     primary_key = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         User,

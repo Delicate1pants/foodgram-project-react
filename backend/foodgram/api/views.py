@@ -15,7 +15,7 @@ from .permissions import HasAccessOrReadOnly
 from .serializers import (FavouritesSerializer, IngredientSerializer,
                           RecipeSerializer, ShoppingCartSerializer,
                           SubscriptionSerializer, TagSerializer)
-from recipes.models import Favourites, Ingredient, Recipe, Shopping_cart, Tag
+from recipes.models import Favourite, Ingredient, Recipe, Shopping_cart, Tag
 from users.models import Subscription, User
 
 
@@ -146,9 +146,9 @@ class FavouritesViewSet(
         user = serializer.validated_data.get('user')
         recipe = serializer.validated_data.get('recipe')
         try:
-            Favourites.objects.get(user=user, recipe=recipe)
+            Favourite.objects.get(user=user, recipe=recipe)
             raise ValidationError('Рецепт уже есть в избранном')
-        except Favourites.DoesNotExist:
+        except Favourite.DoesNotExist:
             serializer.save()
         return Response(
             status=status.HTTP_201_CREATED,
@@ -160,11 +160,11 @@ class FavouritesViewSet(
         recipe = get_object_or_404(Recipe, id=recipe_id)
 
         try:
-            instance = Favourites.objects.get(
+            instance = Favourite.objects.get(
                 user=user,
                 recipe=recipe
             )
-        except Favourites.DoesNotExist:
+        except Favourite.DoesNotExist:
             raise ValidationError('Этого рецепта нет в избранном')
         instance.delete()
         return Response(

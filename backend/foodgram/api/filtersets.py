@@ -1,9 +1,7 @@
 from django.contrib.auth.models import AnonymousUser
 from django_filters import rest_framework as filters
 
-from recipes.models import Favourites, Recipe, Shopping_cart, User
-
-# from users.models import Subscription
+from recipes.models import Favourite, Recipe, Shopping_cart, User
 
 
 class RecipeFilterSet(filters.FilterSet):
@@ -32,11 +30,11 @@ class RecipeFilterSet(filters.FilterSet):
             if type(user) is AnonymousUser:
                 queryset = Recipe.objects.none()
             else:
-                favourites = Favourites.objects.filter(user=user)
+                favourites = Favourite.objects.filter(user=user)
                 queryset = Recipe.objects.filter(id__in=favourites.recipes)
         elif is_favourited == '0':
             if type(user) is not AnonymousUser:
-                favourites = Favourites.objects.filter(user=user)
+                favourites = Favourite.objects.filter(user=user)
                 queryset = Recipe.objects.exclude(id__in=favourites.recipes)
 
         return queryset
@@ -64,16 +62,3 @@ class RecipeFilterSet(filters.FilterSet):
     class Meta:
         model = Recipe
         fields = []
-
-
-# class RecipeLimitFilterSet(filters.FilterSet):
-#     recipes_limit = filters.NumberFilter(
-#         field_name='recipes_limit', method='filter_recipes_limit'
-#     )
-
-#     def filter_recipes_limit(self, queryset, name, value):
-#         return queryset
-
-#     class Meta:
-#         model = Subscription
-#         fields = []

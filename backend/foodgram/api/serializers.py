@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from .fields import (AuthorDefault, CustomBase64ImageField, RecipeDefault,
                      TagsPrimaryKeyRelatedField, UserToRecipesRelationField)
-from recipes.models import (Favourites, Ingredient, IngredientAmount, Recipe,
+from recipes.models import (Favourite, Ingredient, IngredientAmount, Recipe,
                             Shopping_cart, Tag)
 from users.models import Subscription, User
 
@@ -95,7 +95,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(many=True)
     tags = TagsPrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
-    is_favorited = UserToRecipesRelationField(model=Favourites)
+    is_favorited = UserToRecipesRelationField(model=Favourite)
     is_in_shopping_cart = UserToRecipesRelationField(model=Shopping_cart)
     image = CustomBase64ImageField()
 
@@ -232,7 +232,7 @@ class FavouritesSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = Favourites
+        model = Favourite
         fields = [
             'user', 'recipe', 'id', 'name', 'image',
             'cooking_time'
