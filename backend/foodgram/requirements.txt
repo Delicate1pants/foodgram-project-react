@@ -1,9 +1,9 @@
 Django==2.2.16
 djangorestframework==3.12.4
 djangorestframework-simplejwt==5.0.0
-djoser
+djoser==2.1.0
 django-filter==21.1
 psycopg2-binary==2.8.6
-python-dotenv
-Pillow
-drf-extra-fields
+python-dotenv==0.20.0
+Pillow==9.1.1
+drf-extra-fields==3.4.0
