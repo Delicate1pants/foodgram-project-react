@@ -12,11 +12,9 @@ class RecipeFilterSet(filters.FilterSet):
 
     is_favourited = filters.ChoiceFilter(
         choices=BOOLEAN_CHOICES,
-        field_name='is_favourited',
         method='filter_is_favourited')
     is_in_shopping_cart = filters.ChoiceFilter(
         choices=BOOLEAN_CHOICES,
-        field_name='is_in_shopping_cart',
         method='filter_is_in_shopping_cart')
     author = filters.ModelChoiceFilter(queryset=User.objects.all())
     tags = filters.CharFilter(field_name='tags__slug', lookup_expr='exact')

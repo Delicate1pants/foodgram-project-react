@@ -65,20 +65,6 @@ class Recipe(models.Model):
     )
 
     @property
-    def is_favourited(self):
-        """
-        Hook, за который будет дёргать фильтр
-        """
-        return None
-
-    @property
-    def is_in_shopping_cart(self):
-        """
-        Hook, за который будет дёргать фильтр
-        """
-        return None
-
-    @property
     def favourites_count(self):
         """
         Дополнительное поле для админки
