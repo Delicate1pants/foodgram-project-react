@@ -1,6 +1,6 @@
 from django.db import models
 
-from api.validators import HexCodeValidator
+from api.validators import hex_code_validator
 from users.models import User
 
 
@@ -35,7 +35,7 @@ class IngredientAmount(models.Model):
 class Tag(models.Model):
     name = models.CharField(max_length=150, verbose_name='name')
     color = models.CharField(
-        max_length=7, validators=[HexCodeValidator], verbose_name='color'
+        max_length=7, validators=[hex_code_validator], verbose_name='color'
     )
     slug = models.SlugField(unique=True, verbose_name='slug')
 

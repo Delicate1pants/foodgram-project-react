@@ -3,7 +3,7 @@ import re
 from django.core.exceptions import ValidationError
 
 
-def HexCodeValidator(string):
+def hex_code_validator(string):
     val_err = 'Invalid hex color code'
 
     if string is None:
