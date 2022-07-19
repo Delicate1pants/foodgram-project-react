@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import Subscription, User
 from recipes.models import (Favourite, Ingredient, IngredientAmount, Recipe,
-                            Shopping_cart, Tag)
+                            ShoppingCart, Tag)
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -32,5 +32,5 @@ admin.site.register(Favourite)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(IngredientAmount)
 admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(Shopping_cart)
+admin.site.register(ShoppingCart)
 admin.site.register(Tag)

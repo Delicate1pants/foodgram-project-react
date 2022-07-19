@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AnonymousUser
 from django_filters import rest_framework as filters
 
-from recipes.models import Favourite, Recipe, Shopping_cart, User
+from recipes.models import Favourite, Recipe, ShoppingCart, User
 
 
 class RecipeFilterSet(filters.FilterSet):
@@ -44,11 +44,11 @@ class RecipeFilterSet(filters.FilterSet):
         )
 
         if type(user) is not AnonymousUser:
-            shopping_cart = Shopping_cart.objects.filter(
+            shopping_cart = ShoppingCart.objects.filter(
                 user=user
             ).values_list('recipe')
         else:
-            shopping_cart = Shopping_cart.objects.none()
+            shopping_cart = ShoppingCart.objects.none()
 
         if is_in_shopping_cart == '1':
             return Recipe.objects.filter(id__in=shopping_cart)

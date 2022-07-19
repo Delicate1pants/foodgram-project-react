@@ -15,7 +15,7 @@ from .permissions import HasAccessOrReadOnly
 from .serializers import (FavouritesSerializer, IngredientSerializer,
                           RecipeSerializer, ShoppingCartSerializer,
                           SubscriptionSerializer, TagSerializer)
-from recipes.models import Favourite, Ingredient, Recipe, Shopping_cart, Tag
+from recipes.models import Favourite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Subscription, User
 
 
@@ -182,7 +182,7 @@ class ShoppingCartViewSet(
     serializer_class = ShoppingCartSerializer
 
     def get_queryset(self):
-        return Shopping_cart.objects.filter(user=self.request.user)
+        return ShoppingCart.objects.filter(user=self.request.user)
 
     def create(self, request, recipe_id=None):
         serializer = self.serializer_class(
@@ -194,9 +194,9 @@ class ShoppingCartViewSet(
         user = serializer.validated_data.get('user')
         recipe = serializer.validated_data.get('recipe')
         try:
-            Shopping_cart.objects.get(user=user, recipe=recipe)
+            ShoppingCart.objects.get(user=user, recipe=recipe)
             raise ValidationError('Рецепт уже есть в списке покупок')
-        except Shopping_cart.DoesNotExist:
+        except ShoppingCart.DoesNotExist:
             serializer.save()
         return Response(
             status=status.HTTP_201_CREATED,
@@ -208,11 +208,11 @@ class ShoppingCartViewSet(
         recipe = get_object_or_404(Recipe, id=recipe_id)
 
         try:
-            instance = Shopping_cart.objects.get(
+            instance = ShoppingCart.objects.get(
                 user=user,
                 recipe=recipe
             )
-        except Shopping_cart.DoesNotExist:
+        except ShoppingCart.DoesNotExist:
             raise ValidationError('Этого рецепта нет в списке покупок')
         instance.delete()
         return Response(
