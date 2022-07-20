@@ -277,6 +277,14 @@ class FavouritesSerializer(serializers.ModelSerializer):
             'cooking_time'
         ]
 
+    def validate(self, data):
+        user = data.get('user')
+        recipe = data.get('recipe')
+
+        if Favourite.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError('Рецепт уже есть в избранном')
+        return data
+
 
 class ShoppingCartSerializer(FavouritesSerializer):
 

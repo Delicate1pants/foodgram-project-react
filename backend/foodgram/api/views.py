@@ -136,13 +136,7 @@ class FavouritesViewSet(
             }
         )
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data.get('user')
-        recipe = serializer.validated_data.get('recipe')
-        try:
-            Favourite.objects.get(user=user, recipe=recipe)
-            raise ValidationError('Рецепт уже есть в избранном')
-        except Favourite.DoesNotExist:
-            serializer.save()
+        serializer.save()
         return Response(
             status=status.HTTP_201_CREATED,
             data=serializer.data
@@ -152,17 +146,19 @@ class FavouritesViewSet(
         user = request.user
         recipe = get_object_or_404(Recipe, id=recipe_id)
 
-        try:
+        if Favourite.objects.filter(
+                user=user,
+                recipe=recipe
+        ).exists():
             instance = Favourite.objects.get(
                 user=user,
                 recipe=recipe
             )
-        except Favourite.DoesNotExist:
-            raise ValidationError('Этого рецепта нет в избранном')
-        instance.delete()
-        return Response(
-            status=status.HTTP_204_NO_CONTENT
-        )
+            instance.delete()
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
+        raise ValidationError('Этого рецепта нет в избранном')
 
 
 class ShoppingCartViewSet(
