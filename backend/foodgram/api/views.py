@@ -96,15 +96,7 @@ class SubscriptionViewSet(
             }
         )
         serializer.is_valid(raise_exception=True)
-        author = serializer.validated_data.get('author')
-        user = serializer.validated_data.get('user')
-        if author == user:
-            raise ValidationError('Нельзя подписываться на самого себя')
-        try:
-            Subscription.objects.get(author=author, user=user)
-            raise ValidationError('Подписка уже оформлена')
-        except Subscription.DoesNotExist:
-            serializer.save(author=author)
+        serializer.save()
         return Response(
             status=status.HTTP_201_CREATED,
             data=serializer.data
@@ -114,17 +106,19 @@ class SubscriptionViewSet(
         user = request.user
         author_obj = get_object_or_404(User, id=author_id)
 
-        try:
+        if Subscription.objects.filter(
+                user=user,
+                author=author_obj
+        ).exists():
             instance = Subscription.objects.get(
                 user=user,
                 author=author_obj
             )
-        except Subscription.DoesNotExist:
-            raise ValidationError('Вы не подписаны на этого пользователя')
-        instance.delete()
-        return Response(
-            status=status.HTTP_204_NO_CONTENT
-        )
+            instance.delete()
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
+        raise ValidationError('Вы не подписаны на этого пользователя')
 
 
 class FavouritesViewSet(

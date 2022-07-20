@@ -240,20 +240,24 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             qs = Recipe.objects.filter(
                 author=obj.author
             ).order_by('-id').values()
+
         # Вывожу только требуемые поля
-        result = []
-        request = self.context['request']
-        for i in range(len(qs)):
-            obj_dict = {}
-            obj_dict['id'] = qs[i]['id']
-            obj_dict['name'] = qs[i]['name']
-            obj_dict['image'] = request.build_absolute_uri(qs[i]['image'])
-            obj_dict['cooking_time'] = qs[i]['cooking_time']
-            result.append(obj_dict)
-        return result
+        return qs.values('id', 'name', 'image', 'cooking_time')
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()
+
+    def validate(self, data):
+        author = data.get('author')
+        user = data.get('user')
+
+        if author == user:
+            raise serializers.ValidationError(
+                'Нельзя подписываться на самого себя'
+            )
+        if Subscription.objects.filter(author=author, user=user).exists():
+            raise serializers.ValidationError('Подписка уже оформлена')
+        return data
 
 
 class FavouritesSerializer(serializers.ModelSerializer):
