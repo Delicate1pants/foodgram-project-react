@@ -1,4 +1,3 @@
-from django.contrib.auth.models import AnonymousUser
 from rest_framework import serializers
 
 from .fields import (AuthorDefault, CustomBase64ImageField, RecipeDefault,
@@ -198,14 +197,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
-        if type(user) is AnonymousUser:
+        if user.is_anonymous:
             return False
 
-        try:
-            Subscription.objects.get(user=user, author=obj.author)
-            return True
-        except Subscription.DoesNotExist:
-            return False
+        return Subscription.objects.filter(
+            user=user, author=obj.author
+        ).exists()
 
     def get_recipes(self, obj):
         # Фильтрация
