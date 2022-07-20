@@ -2,7 +2,7 @@ from django.contrib.auth.models import AnonymousUser
 from rest_framework import serializers
 
 from .fields import (AuthorDefault, CustomBase64ImageField, RecipeDefault,
-                     TagsPrimaryKeyRelatedField, UserToRecipesRelationField)
+                     TagsPrimaryKeyRelatedField)
 from recipes.models import (Favourite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
 from users.models import Subscription, User
@@ -95,8 +95,8 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(many=True)
     tags = TagsPrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
-    is_favorited = UserToRecipesRelationField(model=Favourite)
-    is_in_shopping_cart = UserToRecipesRelationField(model=ShoppingCart)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
     image = CustomBase64ImageField(use_url=True)
 
     class Meta:
@@ -110,6 +110,23 @@ class RecipeSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'author', 'is_favorited', 'is_in_shopping_cart'
         ]
+
+    def get_is_favorited(self, obj):
+        user = self.context['request'].user
+        # Рецепт может запросить аноним и ниже произойдёт ошибка
+        # "can't cast AnonymousUser to int"
+        # при запросе к бд, если не сделать проверку
+        if user.is_anonymous:
+            return False
+
+        return Favourite.objects.filter(user=user, recipe=obj).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+
+        return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')

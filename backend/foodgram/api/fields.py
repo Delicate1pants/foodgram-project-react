@@ -84,31 +84,6 @@ class CustomBase64ImageField(Base64ImageField):
         )
 
 
-# Не считаю лишним функционалом. Вместо двух почти одинаковых методов
-# для SerializerMethodField в и без того тяжёлом по количеству кода
-# serializers.py
-class UserToRecipesRelationField(serializers.ReadOnlyField):
-    """ Для полей is_favourited и is_in_shopping_cart """
-
-    def __init__(self, model, **kwargs):
-        kwargs['read_only'] = True
-        self.model = model
-        super().__init__(**kwargs)
-
-    # Функция нужна чтобы послать объект класса в to_representation
-    def get_attribute(self, instance):
-        return instance
-
-    def to_representation(self, obj):
-        user = self.context['request'].user
-
-        try:
-            self.model.objects.get(user=user, recipe=obj)
-            return True
-        except self.model.DoesNotExist:
-            return False
-
-
 class AuthorDefault(CurrentUserDefault):
     def __call__(self, serializer_field):
         author_id = serializer_field.context['author_id']
