@@ -74,10 +74,9 @@ class SubscriptionViewSet(
         return Subscription.objects.filter(user=self.request.user)
 
     def list(self, request, *args, **kwargs):
-        queryset = Subscription.objects.filter(user=request.user)
         pagination = ListPagination()
         final_qs = pagination.paginate_queryset(
-            queryset=queryset, request=request
+            queryset=self.get_queryset(), request=request
         )
         serializer = self.serializer_class(
             final_qs, many=True, context={
