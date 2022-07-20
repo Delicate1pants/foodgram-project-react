@@ -63,10 +63,10 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
         queryset=Ingredient.objects.all(), source='ingredient'
     )
     name = serializers.CharField(
-        source='ingredient.name'
+        source='ingredient.name', read_only=True
     )
     measurement_unit = serializers.CharField(
-        source='ingredient.measurement_unit'
+        source='ingredient.measurement_unit', read_only=True
     )
     amount = serializers.IntegerField(min_value=1)
 
@@ -120,6 +120,32 @@ class RecipeSerializer(serializers.ModelSerializer):
             return False
 
         return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
+
+    # def validate(self, data):
+    #     text = data.get('text')
+    #     cooking_time = data.get('cooking_time')
+
+    #     recipe_ids = Recipe.objects.filter(
+    #         text=text, cooking_time=cooking_time
+    #     ).values_list('id')
+    #     if not recipe_ids:
+    #         return data
+
+    #     ingredients = data.get('ingredients')
+    #     ingredients_ids = []
+    #     # raise BaseException(ingredients_ids)
+
+    #     for ingredient in ingredients:
+    #         pass
+
+    #     ingredient_amount_ids = IngredientAmount.objects.filter(
+
+    #     )
+    #     if True:
+    #         raise serializers.ValidationError(
+    #             'Такой рецепт уже существует'
+    #         )
+    #     return data
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
