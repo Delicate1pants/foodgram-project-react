@@ -62,20 +62,18 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(), source='ingredient'
     )
-    name = serializers.SerializerMethodField()
-    measurement_unit = serializers.SerializerMethodField()
+    name = serializers.CharField(
+        source='ingredient.name'
+    )
+    measurement_unit = serializers.CharField(
+        source='ingredient.measurement_unit'
+    )
     amount = serializers.IntegerField(min_value=1)
 
     class Meta:
         model = IngredientAmount
         fields = ['id', 'name', 'measurement_unit', 'amount']
         read_only_fields = ['name', 'measurement_unit']
-
-    def get_name(self, obj):
-        return Ingredient.objects.get(id=obj.ingredient.id).name
-
-    def get_measurement_unit(self, obj):
-        return Ingredient.objects.get(id=obj.ingredient.id).measurement_unit
 
 
 class TagSerializer(serializers.ModelSerializer):
