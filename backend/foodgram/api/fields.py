@@ -1,10 +1,8 @@
 import base64
 import binascii
 
-from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.forms.models import model_to_dict
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from drf_extra_fields.fields import Base64FieldMixin, Base64ImageField
@@ -12,7 +10,7 @@ from rest_framework import serializers
 from rest_framework.serializers import CurrentUserDefault
 
 from api.utils import get_media_recipes_names
-from recipes.models import Ingredient, Recipe
+from recipes.models import Recipe
 from users.models import User
 
 
@@ -27,22 +25,6 @@ class TagsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
             'color': tag_obj.color,
             'slug': tag_obj.slug
         }
-
-
-class IngredientsJSONField(serializers.JSONField):
-    def to_representation(self, ingredients):
-        result = []
-        for ingredient in ingredients:
-            # try не ставлю, т.к validate_ingredients
-            # проверяет существование ингредиента
-            ingr_queryset = Ingredient.objects.get(
-                id=ingredient['id']
-            )
-            ingr_dict = model_to_dict(ingr_queryset)
-            ingr_dict['amount'] = ingredient['amount']
-            result.append(ingr_dict)
-
-        return result
 
 
 class CustomBase64ImageField(Base64ImageField):
@@ -102,6 +84,9 @@ class CustomBase64ImageField(Base64ImageField):
         )
 
 
+# Не считаю лишним функционалом. Вместо двух почти одинаковых методов
+# для SerializerMethodField в и без того тяжёлом по количеству кода
+# serializers.py
 class UserToRecipesRelationField(serializers.ReadOnlyField):
     """ Для полей is_favourited и is_in_shopping_cart """
 
@@ -116,8 +101,6 @@ class UserToRecipesRelationField(serializers.ReadOnlyField):
 
     def to_representation(self, obj):
         user = self.context['request'].user
-        if type(user) is AnonymousUser:
-            return False
 
         try:
             self.model.objects.get(user=user, recipe=obj)
