@@ -10,6 +10,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .filtersets import RecipeFilterSet
+from .mixins import CustomCreateModelMixin, CustomDestroyModelMixin
 from .pagination import IngredientListPagination, ListPagination
 from .permissions import HasAccessOrReadOnly
 from .serializers import (FavouritesSerializer, IngredientSerializer,
@@ -122,90 +123,44 @@ class SubscriptionViewSet(
 
 
 class FavouritesViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
+    CustomCreateModelMixin,
+    CustomDestroyModelMixin,
     viewsets.GenericViewSet
 ):
     permission_classes = (IsAuthenticated,)
     serializer_class = FavouritesSerializer
+    related_model = Favourite
+    delete_error_msg = 'Этого рецепта нет в избранном'
 
-    def create(self, request, recipe_id=None):
-        serializer = self.serializer_class(
-            data=request.data, context={
-                'request': request, 'recipe_id': recipe_id
-            }
+    def destroy(
+        self, request, related_model=None, delete_error_msg=None,
+        recipe_id=None
+    ):
+        return super().destroy(
+            request, self.related_model, self.delete_error_msg, recipe_id
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(
-            status=status.HTTP_201_CREATED,
-            data=serializer.data
-        )
-
-    def destroy(self, request, recipe_id=None):
-        user = request.user
-        recipe = get_object_or_404(Recipe, id=recipe_id)
-
-        if Favourite.objects.filter(
-                user=user,
-                recipe=recipe
-        ).exists():
-            instance = Favourite.objects.get(
-                user=user,
-                recipe=recipe
-            )
-            instance.delete()
-            return Response(
-                status=status.HTTP_204_NO_CONTENT
-            )
-        raise ValidationError('Этого рецепта нет в избранном')
 
 
 class ShoppingCartViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
+    CustomCreateModelMixin,
+    CustomDestroyModelMixin,
     mixins.ListModelMixin,
     viewsets.GenericViewSet
 ):
     permission_classes = (IsAuthenticated,)
     serializer_class = ShoppingCartSerializer
+    related_model = ShoppingCart
+    delete_error_msg = 'Этого рецепта нет в списке покупок'
 
     def get_queryset(self):
         return ShoppingCart.objects.filter(user=self.request.user)
 
-    def create(self, request, recipe_id=None):
-        serializer = self.serializer_class(
-            data=request.data, context={
-                'request': request, 'recipe_id': recipe_id
-            }
-        )
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data.get('user')
-        recipe = serializer.validated_data.get('recipe')
-        try:
-            ShoppingCart.objects.get(user=user, recipe=recipe)
-            raise ValidationError('Рецепт уже есть в списке покупок')
-        except ShoppingCart.DoesNotExist:
-            serializer.save()
-        return Response(
-            status=status.HTTP_201_CREATED,
-            data=serializer.data
-        )
-
-    def destroy(self, request, recipe_id=None):
-        user = request.user
-        recipe = get_object_or_404(Recipe, id=recipe_id)
-
-        try:
-            instance = ShoppingCart.objects.get(
-                user=user,
-                recipe=recipe
-            )
-        except ShoppingCart.DoesNotExist:
-            raise ValidationError('Этого рецепта нет в списке покупок')
-        instance.delete()
-        return Response(
-            status=status.HTTP_204_NO_CONTENT
+    def destroy(
+        self, request, related_model=None, delete_error_msg=None,
+        recipe_id=None
+    ):
+        return super().destroy(
+            request, self.related_model, self.delete_error_msg, recipe_id
         )
 
     def list(self, request):

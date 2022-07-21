@@ -261,6 +261,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 
 class FavouritesSerializer(serializers.ModelSerializer):
+    already_related_error_msg = 'Рецепт уже есть в избранном'
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     recipe = serializers.HiddenField(default=RecipeDefault())
     id = serializers.IntegerField(source='recipe.id', read_only=True)
@@ -281,12 +282,16 @@ class FavouritesSerializer(serializers.ModelSerializer):
         user = data.get('user')
         recipe = data.get('recipe')
 
-        if Favourite.objects.filter(user=user, recipe=recipe).exists():
-            raise serializers.ValidationError('Рецепт уже есть в избранном')
+        # Такое написание нужно, чтобы для наследника тоже работало
+        if self.Meta.model.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError(
+                self.already_related_error_msg
+            )
         return data
 
 
 class ShoppingCartSerializer(FavouritesSerializer):
+    already_related_error_msg = 'Рецепт уже есть в списке покупок'
 
     class Meta:
         model = ShoppingCart
