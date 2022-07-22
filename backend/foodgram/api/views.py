@@ -1,3 +1,4 @@
+from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -16,7 +17,8 @@ from .permissions import HasAccessOrReadOnly
 from .serializers import (FavouritesSerializer, IngredientSerializer,
                           RecipeSerializer, ShoppingCartSerializer,
                           SubscriptionSerializer, TagSerializer)
-from recipes.models import Favourite, Ingredient, Recipe, ShoppingCart, Tag
+from recipes.models import (Favourite, Ingredient, IngredientAmount, Recipe,
+                            ShoppingCart, Tag)
 from users.models import Subscription, User
 
 
@@ -165,36 +167,31 @@ class ShoppingCartViewSet(
 
     def list(self, request):
         qset = self.get_queryset()
-        sum_amount_for_ingr = {}
 
-        # Наполняю словарь с id ингредиентов и общее количество для каждого
-        for obj in qset:
-            ingredients_amounts = obj.recipe.ingredients.all()
-            for obj in ingredients_amounts:
-                ingr_id = str(obj.ingredient_id)
-                if ingr_id in sum_amount_for_ingr:
-                    sum_amount_for_ingr[ingr_id]['amount'] += obj.amount
-                    continue
-                sum_amount_for_ingr[ingr_id] = {'amount': obj.amount}
+        recipe_ids = qset.values_list('recipe_id', flat=True)
 
-        # Добавляю информацию о имени и единице измерения
-        ingredients = Ingredient.objects.filter(
-            id__in=sum_amount_for_ingr.keys()
-        )
-        for ingr in ingredients:
-            ingr_id = str(ingr.id)
-            sum_amount_for_ingr[ingr_id]['measurement_unit'] = ingr.measurement_unit  # noqa E501
-            sum_amount_for_ingr[ingr_id]['name'] = ingr.name
+        ingredient_amounts_ids = Recipe.objects.filter(
+            id__in=recipe_ids
+        ).values('ingredients')
+
+        ingredient_ids = IngredientAmount.objects.filter(
+            primary_key__in=ingredient_amounts_ids
+        ).values('ingredient_id')
+
+        ingredients_info = Ingredient.objects.filter(
+            id__in=ingredient_ids
+        ).annotate(amount=Sum('ingredients__amount', filter=Q(
+            ingredients__primary_key__in=ingredient_amounts_ids)
+        )).values('name', 'amount', 'measurement_unit')
 
         # Перевожу информацию в строку
         text = ''
 
-        for id in sum_amount_for_ingr:
-            ingr_info = sum_amount_for_ingr[id]
-            text += f'{ingr_info["name"]} ({ingr_info["measurement_unit"]}) — {ingr_info["amount"]}\n'  # noqa E501
+        for obj in ingredients_info:
+            name = obj['name'].capitalize()
+            text += f'{name} ({obj["measurement_unit"]}) — {obj["amount"]}\n'
 
         # Строку перевожу в байты на вывод
         file_as_bytes = str.encode(text)
 
-        response = HttpResponse(file_as_bytes)
-        return response
+        return HttpResponse(file_as_bytes)

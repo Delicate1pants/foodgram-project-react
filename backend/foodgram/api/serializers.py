@@ -159,10 +159,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             ingredient_id = ingredient['ingredient']
             amount = ingredient['amount']
-            current_ingredient, status = IngredientAmount.objects.get_or_create(  # noqa E501
+            current_ingr, status = IngredientAmount.objects.get_or_create(
                 ingredient=ingredient_id, amount=amount
             )
-            current_ingredients.append(current_ingredient)
+            current_ingredients.append(current_ingr)
 
         recipe.ingredients.add(*current_ingredients)
 
@@ -180,10 +180,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             ingredient_id = ingredient['ingredient']
             amount = ingredient['amount']
-            current_ingredient, status = IngredientAmount.objects.get_or_create(  # noqa E501
+            current_ingr, status = IngredientAmount.objects.get_or_create(
                 ingredient=ingredient_id, amount=amount
             )
-            current_ingredients.append(current_ingredient)
+            current_ingredients.append(current_ingr)
 
         recipe.ingredients.set(current_ingredients)
 
