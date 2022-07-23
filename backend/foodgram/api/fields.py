@@ -6,25 +6,11 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from drf_extra_fields.fields import Base64FieldMixin, Base64ImageField
-from rest_framework import serializers
 from rest_framework.serializers import CurrentUserDefault
 
 from api.utils import get_media_recipes_names
 from recipes.models import Recipe
 from users.models import User
-
-
-class TagsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
-    def to_representation(self, tag_obj):
-        if self.pk_field is not None:
-            return self.pk_field.to_representation(tag_obj.pk)
-
-        return {
-            'id': tag_obj.id,
-            'name': tag_obj.name,
-            'color': tag_obj.color,
-            'slug': tag_obj.slug
-        }
 
 
 class CustomBase64ImageField(Base64ImageField):

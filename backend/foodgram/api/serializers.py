@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from .fields import (AuthorDefault, CustomBase64ImageField, RecipeDefault,
-                     TagsPrimaryKeyRelatedField)
+from .fields import AuthorDefault, CustomBase64ImageField, RecipeDefault
 from recipes.models import (Favourite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
 from users.models import Subscription, User
@@ -84,13 +83,40 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'name', 'color', 'slug']
 
 
+class NestedTagSerializer(serializers.ModelSerializer):
+    identificator = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Tag
+        fields = [
+            'id', 'name', 'color', 'slug',
+            'identificator'
+        ]
+        read_only_fields = ['id', 'name', 'color', 'slug']
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(many=True)
-    tags = TagsPrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
+    tags = NestedTagSerializer(many=True)
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = CustomBase64ImageField(use_url=True)
+
+    # Вложенный сериализатор хочет dict, привожу к нему
+    def to_internal_value(self, data):
+        tags = self.initial_data['tags']
+        proper_tags = []
+        for tag in tags:
+            # id - read_only, его нельзя использовать,
+            # Так как значение выбросится сериализатором и в create
+            # tags будет пустым OrderedDict()
+            # Поэтому использую поле identificator
+            # Так безопаснее, чем позволять делать write операции в id
+            proper_tag = {'identificator': tag}
+            proper_tags.append(proper_tag)
+        data['tags'] = proper_tags
+        return super(RecipeSerializer, self).to_internal_value(data)
 
     class Meta:
         model = Recipe
@@ -124,23 +150,12 @@ class RecipeSerializer(serializers.ModelSerializer):
     # def validate(self, data):
     #     text = data.get('text')
     #     cooking_time = data.get('cooking_time')
-
-    #     recipe_ids = Recipe.objects.filter(
-    #         text=text, cooking_time=cooking_time
-    #     ).values_list('id')
-    #     if not recipe_ids:
-    #         return data
-
     #     ingredients = data.get('ingredients')
-    #     ingredients_ids = []
-    #     # raise BaseException(ingredients_ids)
-
-    #     for ingredient in ingredients:
-    #         pass
-
-    #     ingredient_amount_ids = IngredientAmount.objects.filter(
-
+    #     # raise BaseException(ingredients)
+    #     ingredients_as_in_db = IngredientAmount.objects.filter(
+    #         primary_key__in=ingredients
     #     )
+
     #     if True:
     #         raise serializers.ValidationError(
     #             'Такой рецепт уже существует'
@@ -153,7 +168,10 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         recipe = Recipe.objects.create(**validated_data)
 
-        recipe.tags.add(*tags)
+        tags_as_ids = []
+        for tag in tags:
+            tags_as_ids.append(tag['identificator'])
+        recipe.tags.set(tags_as_ids)
 
         current_ingredients = []
         for ingredient in ingredients:
@@ -164,7 +182,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
             current_ingredients.append(current_ingr)
 
-        recipe.ingredients.add(*current_ingredients)
+        recipe.ingredients.set(current_ingredients)
 
         return recipe
 
@@ -174,7 +192,10 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         recipe = super().update(instance, validated_data)
 
-        recipe.tags.set(tags)
+        tags_as_ids = []
+        for tag in tags:
+            tags_as_ids.append(tag['identificator'])
+        recipe.tags.set(tags_as_ids)
 
         current_ingredients = []
         for ingredient in ingredients:
