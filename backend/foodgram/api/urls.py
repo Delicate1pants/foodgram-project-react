@@ -13,7 +13,7 @@ router.register(r'ingredients', IngredientViewSet, basename='ingredients')
 router.register(r'tags', TagViewSet, basename='tags')
 router.register(r'recipes', RecipeViewSet, basename='recipes')
 
-subpaths = [
+urlpatterns = [
     path(
         'users/subscriptions/',
         SubscriptionViewSet.as_view({'get': 'list'}),
@@ -46,10 +46,4 @@ subpaths = [
         'auth/token/logout/', DjoserTokenDestroyView.as_view(),
         name='token_destroy'
     ),
-]
-
-urlpatterns = [
-    path(
-        'v1/', include(subpaths)
-    )
 ]
