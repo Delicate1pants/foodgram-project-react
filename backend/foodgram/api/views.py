@@ -191,14 +191,11 @@ class ShoppingCartViewSet(
             name = obj['name'].capitalize()
             text += f'{name} ({obj["measurement_unit"]}) — {obj["amount"]}\n'
 
-        txt_name = 'Список покупок'
-        with open(f'{txt_name}.txt', 'w+') as txt_file:
-            txt_file.write(text)
-            response = HttpResponse(txt_file, content_type='text/txt')
-            response['Content-Disposition'] = (
-                f'attachment; filename={txt_name}.txt'
-            )
-            return response
+        response = HttpResponse(text, content_type='text/plain')
+        response['Content-Disposition'] = (
+            f'attachment;'
+        )
+        return response
 
         # Строку перевожу в байты на вывод
         # file_as_bytes = str.encode(text)
