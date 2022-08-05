@@ -193,11 +193,6 @@ class ShoppingCartViewSet(
 
         response = HttpResponse(text, content_type='text/plain')
         response['Content-Disposition'] = (
-            f'attachment;'
+            'attachment;'
         )
         return response
-
-        # Строку перевожу в байты на вывод
-        # file_as_bytes = str.encode(text)
-
-        # return HttpResponse(file_as_bytes)

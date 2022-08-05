@@ -1,6 +1,10 @@
+from functools import reduce
+from operator import or_
+
 from rest_framework import serializers
 
 from .fields import AuthorDefault, CustomBase64ImageField, RecipeDefault
+from .utils import ingr_amount_bulk_create
 from recipes.models import (Favourite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
 from users.models import Subscription, User
@@ -147,20 +151,22 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
 
-    # def validate(self, data):
-    #     text = data.get('text')
-    #     cooking_time = data.get('cooking_time')
-    #     ingredients = data.get('ingredients')
-    #     # raise BaseException(ingredients)
-    #     ingredients_as_in_db = IngredientAmount.objects.filter(
-    #         primary_key__in=ingredients
-    #     )
+    def validate(self, data):
+        text = data.get('text')
+        cooking_time = data.get('cooking_time')
+        ingredients = data.get('ingredients')
+        ingr_amounts = 0
 
-    #     if True:
-    #         raise serializers.ValidationError(
-    #             'Такой рецепт уже существует'
-    #         )
-    #     return data
+        already_exists = Recipe.objects.filter(
+            text=text, cooking_time=cooking_time,
+            ingredients__exact=ingr_amounts
+        ).exists()
+
+        if already_exists:
+            raise serializers.ValidationError(
+                'Такой рецепт уже существует'
+            )
+        return data
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
@@ -173,16 +179,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             tags_as_ids.append(tag['identificator'])
         recipe.tags.set(tags_as_ids)
 
-        current_ingredients = []
-        for ingredient in ingredients:
-            ingredient_id = ingredient['ingredient']
-            amount = ingredient['amount']
-            current_ingr, status = IngredientAmount.objects.get_or_create(
-                ingredient=ingredient_id, amount=amount
-            )
-            current_ingredients.append(current_ingr)
+        ingredient_amounts = ingr_amount_bulk_create(ingredients)
 
-        recipe.ingredients.set(current_ingredients)
+        recipe.ingredients.set(ingredient_amounts)
 
         return recipe
 
@@ -197,16 +196,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             tags_as_ids.append(tag['identificator'])
         recipe.tags.set(tags_as_ids)
 
-        current_ingredients = []
-        for ingredient in ingredients:
-            ingredient_id = ingredient['ingredient']
-            amount = ingredient['amount']
-            current_ingr, status = IngredientAmount.objects.get_or_create(
-                ingredient=ingredient_id, amount=amount
-            )
-            current_ingredients.append(current_ingr)
+        ingredient_amounts = ingr_amount_bulk_create(ingredients)
 
-        recipe.ingredients.set(current_ingredients)
+        recipe.ingredients.set(ingredient_amounts)
 
         return recipe
 
