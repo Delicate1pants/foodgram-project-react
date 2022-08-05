@@ -1,6 +1,7 @@
 from functools import reduce
 from operator import or_
 
+from django.db.models import Q
 from rest_framework import serializers
 
 from .fields import AuthorDefault, CustomBase64ImageField, RecipeDefault
@@ -152,15 +153,24 @@ class RecipeSerializer(serializers.ModelSerializer):
         return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
 
     def validate(self, data):
+        # Эти три поля и есть рецепт, по сути
+        # При такой валидации нельзя будет создать тот же самый рецепт
+        # С другим названием, картинкой или тэгами
         text = data.get('text')
         cooking_time = data.get('cooking_time')
         ingredients = data.get('ingredients')
-        ingr_amounts = 0
 
         already_exists = Recipe.objects.filter(
+            reduce(
+                or_, [
+                    Q(
+                        ingredients__ingredient=ingr['ingredient'],
+                        ingredients__amount=ingr['amount']
+                    ) for ingr in ingredients
+                ]
+            ),
             text=text, cooking_time=cooking_time,
-            ingredients__exact=ingr_amounts
-        ).exists()
+        ).count() == len(ingredients)
 
         if already_exists:
             raise serializers.ValidationError(
