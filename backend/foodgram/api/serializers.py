@@ -1,8 +1,5 @@
 from collections import OrderedDict
-from functools import reduce
-from operator import or_
 
-from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.fields import SkipField
 from rest_framework.relations import PKOnlyObject
@@ -153,25 +150,24 @@ class RecipeSerializer(serializers.ModelSerializer):
         return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
 
     def validate(self, data):
-        text = data.get('text')
-        cooking_time = data.get('cooking_time')
-        ingredients = data.get('ingredients')
+        tags = data.get('tags')
+        ingrs = data.get('ingredients')
 
-        already_exists = Recipe.objects.filter(
-            reduce(
-                or_, [
-                    Q(
-                        ingredients__ingredient=ingr['ingredient'],
-                        ingredients__amount=ingr['amount']
-                    ) for ingr in ingredients
-                ]
-            ),
-            text=text, cooking_time=cooking_time,
-        ).count() == len(ingredients)
+        tags_are_not_unique = len(set(tags)) < len(tags)
 
-        if already_exists:
+        ingr_ids = []
+        for ingr in ingrs:
+            ingr_ids.append(ingr['ingredient'])
+
+        ingr_ids_are_not_unique = len(set(ingr_ids)) < len(ingr_ids)
+
+        if tags_are_not_unique:
             raise serializers.ValidationError(
-                'Такой рецепт уже существует'
+                'Тэги не должны содержать повторяющиеся id'
+            )
+        if ingr_ids_are_not_unique:
+            raise serializers.ValidationError(
+                'Ингредиенты не должны содержить повторяющиеся id'
             )
         return data
 
@@ -243,7 +239,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                 author=obj.author
             ).order_by('-id').values()
 
-        # Вывожу только требуемые поля
         return qs.values('id', 'name', 'image', 'cooking_time')
 
     def get_recipes_count(self, obj):
