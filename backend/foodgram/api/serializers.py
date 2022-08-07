@@ -1,11 +1,14 @@
+from collections import OrderedDict
 from functools import reduce
 from operator import or_
 
 from django.db.models import Q
 from rest_framework import serializers
+from rest_framework.fields import SkipField
+from rest_framework.relations import PKOnlyObject
 
 from .fields import AuthorDefault, CustomBase64ImageField, RecipeDefault
-from .utils import ingr_amount_bulk_create
+from .utils import ingr_amount_bulk_create_plus
 from recipes.models import (Favourite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
 from users.models import Subscription, User
@@ -88,40 +91,40 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'name', 'color', 'slug']
 
 
-class NestedTagSerializer(serializers.ModelSerializer):
-    identificator = serializers.IntegerField(write_only=True)
-
-    class Meta:
-        model = Tag
-        fields = [
-            'id', 'name', 'color', 'slug',
-            'identificator'
-        ]
-        read_only_fields = ['id', 'name', 'color', 'slug']
-
-
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(many=True)
-    tags = NestedTagSerializer(many=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True
+    )
     author = UserRetrieveSerializer(default=serializers.CurrentUserDefault())
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = CustomBase64ImageField(use_url=True)
 
-    # Вложенный сериализатор хочет dict, привожу к нему
-    def to_internal_value(self, data):
-        tags = self.initial_data['tags']
-        proper_tags = []
-        for tag in tags:
-            # id - read_only, его нельзя использовать,
-            # Так как значение выбросится сериализатором и в create
-            # tags будет пустым OrderedDict()
-            # Поэтому использую поле identificator
-            # Так безопаснее, чем позволять делать write операции в id
-            proper_tag = {'identificator': tag}
-            proper_tags.append(proper_tag)
-        data['tags'] = proper_tags
-        return super(RecipeSerializer, self).to_internal_value(data)
+    def to_representation(self, instance):
+        ret = OrderedDict()
+        fields = self._readable_fields
+
+        for field in fields:
+            try:
+                attribute = field.get_attribute(instance)
+            except SkipField:
+                continue
+
+            check_for_none = attribute.pk if isinstance(
+                attribute, PKOnlyObject
+            ) else attribute
+            if check_for_none is None:
+                ret[field.field_name] = None
+            else:
+                # Мой код про тэги, остальное взято у родителя
+                if field.field_name == 'tags':
+                    serializer = TagSerializer(attribute, many=True)
+                    ret[field.field_name] = list(serializer.data)
+                else:
+                    ret[field.field_name] = field.to_representation(attribute)
+
+        return ret
 
     class Meta:
         model = Recipe
@@ -137,9 +140,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
-        # Рецепт может запросить аноним и ниже произойдёт ошибка
-        # "can't cast AnonymousUser to int"
-        # при запросе к бд, если не сделать проверку
         if user.is_anonymous:
             return False
 
@@ -153,9 +153,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
 
     def validate(self, data):
-        # Эти три поля и есть рецепт, по сути
-        # При такой валидации нельзя будет создать тот же самый рецепт
-        # С другим названием, картинкой или тэгами
         text = data.get('text')
         cooking_time = data.get('cooking_time')
         ingredients = data.get('ingredients')
@@ -179,38 +176,16 @@ class RecipeSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-
         recipe = Recipe.objects.create(**validated_data)
 
-        tags_as_ids = []
-        for tag in tags:
-            tags_as_ids.append(tag['identificator'])
-        recipe.tags.set(tags_as_ids)
-
-        ingredient_amounts = ingr_amount_bulk_create(ingredients)
-
-        recipe.ingredients.set(ingredient_amounts)
-
-        return recipe
+        return ingr_amount_bulk_create_plus(ingredients, recipe)
 
     def update(self, instance, validated_data):
-        tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-
         recipe = super().update(instance, validated_data)
 
-        tags_as_ids = []
-        for tag in tags:
-            tags_as_ids.append(tag['identificator'])
-        recipe.tags.set(tags_as_ids)
-
-        ingredient_amounts = ingr_amount_bulk_create(ingredients)
-
-        recipe.ingredients.set(ingredient_amounts)
-
-        return recipe
+        return ingr_amount_bulk_create_plus(ingredients, recipe)
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):

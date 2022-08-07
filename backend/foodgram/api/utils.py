@@ -11,7 +11,7 @@ def get_media_recipes_names():
     return os.listdir(dir_path)
 
 
-def ingr_amount_bulk_create(ingredients):
+def ingr_amount_bulk_create_plus(ingredients, recipe):
     """Для кастомных методов create и update в RecipeSerializer"""
     ingredient_amounts = []
     for ingr in ingredients:
@@ -23,4 +23,6 @@ def ingr_amount_bulk_create(ingredients):
         )
     IngredientAmount.objects.bulk_create(ingredient_amounts)
 
-    return ingredient_amounts
+    recipe.ingredients.set(ingredient_amounts)
+
+    return recipe
