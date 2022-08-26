@@ -40,7 +40,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
 
-    pagination_class = IngredientListPagination
+    pagination_class = None
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
