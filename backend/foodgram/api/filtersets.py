@@ -9,9 +9,9 @@ class RecipeFilterSet(filters.FilterSet):
         ('1', True),
     )
 
-    is_favourited = filters.ChoiceFilter(
+    is_favorited = filters.ChoiceFilter(
         choices=BOOLEAN_CHOICES,
-        method='filter_is_favourited')
+        method='filter_is_favorited')
     is_in_shopping_cart = filters.ChoiceFilter(
         choices=BOOLEAN_CHOICES,
         method='filter_is_in_shopping_cart')
@@ -22,21 +22,21 @@ class RecipeFilterSet(filters.FilterSet):
         to_field_name='slug',
     )
 
-    def filter_is_favourited(self, queryset, name, value):
+    def filter_is_favorited(self, queryset, name, value):
         user = self.request.user
-        is_favourited = self.request.query_params.get('is_favourited')
+        is_favorited = self.request.query_params.get('is_favorited')
 
         if user.is_authenticated:
-            favourites = Favourite.objects.filter(
+            favorites = Favourite.objects.filter(
                 user=user
             ).values_list('recipe')
         else:
-            favourites = Favourite.objects.none()
+            favorites = Favourite.objects.none()
 
-        if is_favourited == '1':
-            return Recipe.objects.filter(id__in=favourites)
-        elif is_favourited == '0':
-            return Recipe.objects.exclude(id__in=favourites)
+        if is_favorited == '1':
+            return Recipe.objects.filter(id__in=favorites)
+        elif is_favorited == '0':
+            return Recipe.objects.exclude(id__in=favorites)
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
