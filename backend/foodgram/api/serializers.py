@@ -188,6 +188,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         return ingr_amount_bulk_create_plus(ingredients, recipe)
 
 
+class ShorterRecipeSerializer(RecipeSerializer):
+    class Meta:
+        model = Recipe
+        fields = [
+            'id', 'name', 'image', 'cooking_time'
+        ]
+
+
 class SubscriptionSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     author = serializers.HiddenField(default=AuthorDefault())
@@ -233,13 +241,18 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             limit = int(limit)
             qs = Recipe.objects.filter(
                 author=obj.author
-            ).order_by('-id').values()[:limit]
+            ).order_by('-id')[:limit]
         else:
             qs = Recipe.objects.filter(
                 author=obj.author
-            ).order_by('-id').values()
+            ).order_by('-id')
 
-        return qs.values('id', 'name', 'image', 'cooking_time')
+        request = self.context.get('request')
+        serializer = ShorterRecipeSerializer(
+            qs, many=True, context={'request': request}
+        )
+
+        return serializer.data
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()

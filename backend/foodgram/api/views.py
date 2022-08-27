@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from .filtersets import RecipeFilterSet
 from .mixins import CustomCreateModelMixin, CustomDestroyModelMixin
-from .pagination import IngredientListPagination, ListPagination
+from .pagination import ListPagination
 from .permissions import HasAccessOrReadOnly
 from .serializers import (FavouritesSerializer, IngredientSerializer,
                           RecipeSerializer, ShoppingCartSerializer,
