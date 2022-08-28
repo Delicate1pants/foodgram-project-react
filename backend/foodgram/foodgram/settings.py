@@ -108,7 +108,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.ListPagination',
-    'PAGE_SIZE': 1
+    'PAGE_SIZE': 1,
+    'SEARCH_PARAM': 'name'
 }
 
 DJOSER = {
